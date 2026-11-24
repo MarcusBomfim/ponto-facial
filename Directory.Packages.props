@@ -1,0 +1,15 @@
+<Project>
+  <!--
+    Versões de pacote num lugar só. Cada projeto declara QUAL pacote usa; a
+    versão é decidida aqui, e dois projetos da solução nunca ficam em versões
+    diferentes do mesmo pacote. A mesma versão do xUnit do crm-obras e do
+    planejamento-obras.
+  -->
+  <PropertyGroup>
+    <ManagePackageVersionsCentrally>true</ManagePackageVersionsCentrally>
+    <CentralPackageTransitivePinningEnabled>true</CentralPackageTransitivePinningEnabled>
+  </PropertyGroup>
+  <ItemGroup>
+    <PackageVersion Include="xunit.v3.mtp-v2" Version="4.0.2" />
+  </ItemGroup>
+</Project>

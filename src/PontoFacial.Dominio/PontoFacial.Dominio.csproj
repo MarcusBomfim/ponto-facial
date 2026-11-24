@@ -1,0 +1,11 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <!--
+    O domínio não tem PackageReference nenhum, e o teste de arquitetura
+    garante que continue assim: ele depende só da biblioteca padrão do .NET.
+    As regras do ponto e da biometria se testam sem banco, sem câmera e sem
+    rede.
+  -->
+  <PropertyGroup>
+    <RootNamespace>PontoFacial.Dominio</RootNamespace>
+  </PropertyGroup>
+</Project>
