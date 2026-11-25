@@ -126,6 +126,28 @@ public sealed class RegrasDoDominioTests
         Assert.Empty(lidas);
     }
 
+    [Fact]
+    public void O_dominio_nao_guarda_imagem()
+    {
+        /*
+         * O rosto entra no domínio como vetor — o ModeloFacial —, nunca como
+         * foto (ADR-0004). Nenhum tipo do domínio, público ou não, tem campo
+         * ou propriedade de bytes ou de fluxo: é onde uma foto caberia.
+         */
+        Type[] deImagem = [typeof(byte[]), typeof(Stream), typeof(Memory<byte>), typeof(ReadOnlyMemory<byte>), typeof(ReadOnlySpan<byte>)];
+        const BindingFlags Todos = BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance | BindingFlags.Static | BindingFlags.DeclaredOnly;
+
+        var guardamBytes = Dominio
+            .GetTypes()
+            .SelectMany(tipo => tipo.GetFields(Todos).Select(campo => (tipo, campo.Name, Tipo: campo.FieldType))
+                .Concat(tipo.GetProperties(Todos).Select(propriedade => (tipo, propriedade.Name, Tipo: propriedade.PropertyType))))
+            .Where(membro => deImagem.Any(tipo => tipo == membro.Tipo || tipo.IsAssignableFrom(membro.Tipo)))
+            .Select(membro => $"{membro.tipo.Name}.{membro.Name}")
+            .ToArray();
+
+        Assert.Empty(guardamBytes);
+    }
+
     private static bool EhDaBibliotecaPadrao(string nome) =>
         nome is "System" or "netstandard" or "mscorlib"
         || nome.StartsWith("System.", StringComparison.Ordinal);
