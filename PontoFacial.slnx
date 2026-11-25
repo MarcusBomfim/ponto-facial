@@ -1,9 +1,14 @@
 <Solution>
   <Folder Name="/src/">
     <Project Path="src/PontoFacial.Dominio/PontoFacial.Dominio.csproj" />
+    <Project Path="src/PontoFacial.Rosto/PontoFacial.Rosto.csproj" />
   </Folder>
   <Folder Name="/tests/">
     <Project Path="tests/PontoFacial.Arquitetura.Testes/PontoFacial.Arquitetura.Testes.csproj" />
     <Project Path="tests/PontoFacial.Dominio.Testes/PontoFacial.Dominio.Testes.csproj" />
+    <Project Path="tests/PontoFacial.Rosto.Testes/PontoFacial.Rosto.Testes.csproj" />
+  </Folder>
+  <Folder Name="/tools/">
+    <Project Path="tools/PontoFacial.Calibracao/PontoFacial.Calibracao.csproj" />
   </Folder>
 </Solution>

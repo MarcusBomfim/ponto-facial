@@ -1,0 +1,15 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <!--
+    Calibra o limiar de aceitação numa base de imagens organizada por pessoa
+    — uma pasta por pessoa, as fotos dentro —, como a LFW. Compara todas as
+    fotos com todas e escreve o relatório (ADR-0004).
+  -->
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <RootNamespace>PontoFacial.Calibracao</RootNamespace>
+    <InvariantGlobalization>false</InvariantGlobalization>
+  </PropertyGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\..\src\PontoFacial.Rosto\PontoFacial.Rosto.csproj" />
+  </ItemGroup>
+</Project>

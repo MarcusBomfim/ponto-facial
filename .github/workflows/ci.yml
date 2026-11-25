@@ -35,6 +35,14 @@ jobs:
         with:
           global-json-file: global.json
 
+      # Os modelos de rosto vêm do OpenCV Zoo, e o build confere o SHA-256 de
+      # cada um (ADR-0005). O cache evita baixar 37 MB a cada execução; a
+      # chave muda quando muda o projeto que fixa os arquivos.
+      - uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: modelos
+          key: modelos-${{ hashFiles('src/PontoFacial.Rosto/PontoFacial.Rosto.csproj') }}
+
       - name: Restaurar dependências
         run: dotnet restore PontoFacial.slnx
 

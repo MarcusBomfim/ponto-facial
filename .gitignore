@@ -480,3 +480,7 @@ $RECYCLE.BIN/
 
 # Vim temporary swap files
 *.swp
+
+# Os modelos de rosto (ONNX) são baixados pelo build, com o SHA-256
+# conferido, e não entram no repositório (ADR-0005).
+modelos/

@@ -4,12 +4,20 @@
     versão é decidida aqui, e dois projetos da solução nunca ficam em versões
     diferentes do mesmo pacote. A mesma versão do xUnit do crm-obras e do
     planejamento-obras.
+
+    O reconhecimento do rosto (ADR-0005): o ONNX Runtime roda os modelos, e
+    o SkiaSharp lê as imagens. Os dois têm licença MIT. O pacote de Linux sem
+    dependências traz a biblioteca nativa do Skia sem pedir o fontconfig da
+    máquina, que o contêiner e o CI não têm.
   -->
   <PropertyGroup>
     <ManagePackageVersionsCentrally>true</ManagePackageVersionsCentrally>
     <CentralPackageTransitivePinningEnabled>true</CentralPackageTransitivePinningEnabled>
   </PropertyGroup>
   <ItemGroup>
+    <PackageVersion Include="Microsoft.ML.OnnxRuntime" Version="1.31.1" />
+    <PackageVersion Include="SkiaSharp" Version="4.153.0" />
+    <PackageVersion Include="SkiaSharp.NativeAssets.Linux.NoDependencies" Version="4.153.0" />
     <PackageVersion Include="xunit.v3.mtp-v2" Version="4.0.2" />
   </ItemGroup>
 </Project>

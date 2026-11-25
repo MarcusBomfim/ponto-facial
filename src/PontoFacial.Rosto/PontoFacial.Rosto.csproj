@@ -1,0 +1,55 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <!--
+    O rosto: ler a imagem, achar o rosto, alinhá-lo e transformá-lo no vetor
+    que o domínio guarda (ADR-0005). Os modelos ONNX não entram no
+    repositório. O build baixa cada um do commit fixado do OpenCV Zoo, confere
+    o SHA-256 e copia para a pasta de saída de quem usa este projeto. Um
+    arquivo trocado no caminho para o build; o que já foi baixado e confere
+    não é baixado de novo.
+  -->
+  <PropertyGroup>
+    <RootNamespace>PontoFacial.Rosto</RootNamespace>
+    <PastaDosModelos>$(MSBuildThisFileDirectory)..\..\modelos\</PastaDosModelos>
+    <OrigemDosModelos>https://media.githubusercontent.com/media/opencv/opencv_zoo/48b10fa505aeb51fbd127fc60a5c660040e823b7/models</OrigemDosModelos>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.ML.OnnxRuntime" />
+    <PackageReference Include="SkiaSharp" />
+    <PackageReference Include="SkiaSharp.NativeAssets.Linux.NoDependencies" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\PontoFacial.Dominio\PontoFacial.Dominio.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <InternalsVisibleTo Include="PontoFacial.Rosto.Testes" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <!-- YuNet, licença MIT: acha o rosto e os cinco pontos dele. -->
+    <ModeloDeRosto Include="face_detection_yunet_2026may.onnx"
+                   Origem="$(OrigemDosModelos)/face_detection_yunet/face_detection_yunet_2026may.onnx"
+                   Sha256="ebafce4e3c118d6554634be5c27ab333b4c047a9a8c3faf1d7cf93101c22f0f0" />
+    <!-- SFace, licença Apache 2.0: transforma o rosto alinhado em 128 números. -->
+    <ModeloDeRosto Include="face_recognition_sface_2021dec.onnx"
+                   Origem="$(OrigemDosModelos)/face_recognition_sface/face_recognition_sface_2021dec.onnx"
+                   Sha256="0ba9fbfa01b5270c96627c4ef784da859931e02f04419c829e83484087c34e79" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Include="$(PastaDosModelos)face_detection_yunet_2026may.onnx" Link="modelos\face_detection_yunet_2026may.onnx" CopyToOutputDirectory="PreserveNewest" Visible="false" />
+    <None Include="$(PastaDosModelos)face_recognition_sface_2021dec.onnx" Link="modelos\face_recognition_sface_2021dec.onnx" CopyToOutputDirectory="PreserveNewest" Visible="false" />
+  </ItemGroup>
+
+  <Target Name="BaixarModelosDeRosto" BeforeTargets="BeforeBuild">
+    <DownloadFile SourceUrl="%(ModeloDeRosto.Origem)"
+                  DestinationFolder="$(PastaDosModelos)"
+                  DestinationFileName="%(ModeloDeRosto.Identity)"
+                  Retries="3"
+                  RetryDelayMilliseconds="5000"
+                  Condition="!Exists('$(PastaDosModelos)%(ModeloDeRosto.Identity)')" />
+    <VerifyFileHash File="$(PastaDosModelos)%(ModeloDeRosto.Identity)" Algorithm="SHA256" Hash="%(ModeloDeRosto.Sha256)" />
+  </Target>
+</Project>
