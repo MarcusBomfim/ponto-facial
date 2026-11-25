@@ -3,6 +3,7 @@ using PontoFacial.Dominio.Cadastro;
 using PontoFacial.Dominio.Comum;
 using PontoFacial.Dominio.Documentos;
 using PontoFacial.Dominio.Registro;
+using PontoFacial.Dominio.Testes.Biometria;
 using static PontoFacial.Dominio.Testes.Exemplos;
 using static PontoFacial.Dominio.Testes.Registro.RegistroDeExemplo;
 
@@ -228,7 +229,8 @@ public sealed class RegistroDePontoTests
         var umRegistro = ComJoaoEMaria();
         var outroRegistro = ComJoaoEMaria();
 
-        var peloRosto = umRegistro.MarcarOnLine(IdentificacaoDoTrabalhador.PorRosto(autorizacao, Em(23, 7, 58)), Coletor.DispositivoEletronico);
+        var peloRosto = umRegistro.MarcarOnLine(
+            IdentificacaoDoTrabalhador.PorRosto(autorizacao, RostosDeTeste.JoaoConferido(autorizacao, Em(23, 7, 58))), Coletor.DispositivoEletronico);
         var peloCodigo = outroRegistro.MarcarOnLine(PeloCodigo(Joao, Em(23, 7, 58)), Coletor.DispositivoEletronico);
 
         Assert.Equal(MeioDeIdentificacao.Rosto, peloRosto.Meio);

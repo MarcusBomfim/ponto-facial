@@ -3,6 +3,7 @@ using PontoFacial.Dominio.Cadastro;
 using PontoFacial.Dominio.Comum;
 using PontoFacial.Dominio.Documentos;
 using PontoFacial.Dominio.Registro;
+using PontoFacial.Dominio.Testes.Biometria;
 
 namespace PontoFacial.Dominio.Testes;
 
@@ -26,12 +27,16 @@ public sealed class ExemploDoReadmeTests
         var registro = RegistroDePonto.Abrir(obra, rh, Hora(6, 0));
         registro.IncluirTrabalhador(joao, rh, Hora(6, 1));
 
-        // O João lê o termo e autoriza a biometria.
+        // O João lê o termo, autoriza a biometria e cadastra o rosto com três capturas.
         var termo = TermoDeConsentimento.Novo("2026.1", Exemplos.TextoDoTermo);
         var autorizacao = AutorizacaoBiometrica.Conceder(construtora, joao, termo, Hora(7, 0));
+        var limiar = RostosDeTeste.Limiar;
+        var cadastro = CadastroFacial.Cadastrar(autorizacao, RostosDeTeste.CapturasDoJoao, limiar, Hora(7, 5));
 
-        // Às 7h58min31s, olha para o tablet da portaria.
-        var entrada = registro.MarcarOnLine(IdentificacaoDoTrabalhador.PorRosto(autorizacao, Hora(7, 58, 31)), Coletor.DispositivoEletronico);
+        // Às 7h58min31s, digita o CPF no tablet da portaria e olha para a câmera.
+        var conferencia = cadastro.Conferir(RostosDeTeste.JoaoNaPortaria, limiar, Hora(7, 58, 31));
+        Assert.True(conferencia.Conferiu);
+        var entrada = registro.MarcarOnLine(IdentificacaoDoTrabalhador.PorRosto(autorizacao, conferencia), Coletor.DispositivoEletronico);
         Assert.Equal(3, entrada.Nsr);
         Assert.Equal("000000003" + "7" + "2026-11-23T07:58:00-0300" + "052998224725" + "2026-11-23T07:58:00-0300" + "04" + "0", entrada.Campos);
         Assert.Equal("7221a9802299bd7a0cd9b4b9813d9872d5a6a0c07311eab15ce5123e913a41bd", entrada.Hash);
@@ -42,7 +47,8 @@ public sealed class ExemploDoReadmeTests
         Assert.Equal(MotivoDoEncerramento.RevogadaPeloTrabalhador, eliminar.Motivo);
 
         // Na saída, o rosto não o identifica mais. O código pessoal, sim, e a saída vale o mesmo.
-        var recusa = Assert.Throws<ExcecaoDeDominio>(() => IdentificacaoDoTrabalhador.PorRosto(autorizacao, Hora(17, 2)));
+        var naSaida = cadastro.Conferir(RostosDeTeste.JoaoNaPortaria, limiar, Hora(17, 2));
+        var recusa = Assert.Throws<ExcecaoDeDominio>(() => IdentificacaoDoTrabalhador.PorRosto(autorizacao, naSaida));
         Assert.Equal(
             "Sem autorização biométrica vigente, o rosto não identifica o trabalhador. O código pessoal continua valendo.",
             recusa.Message);

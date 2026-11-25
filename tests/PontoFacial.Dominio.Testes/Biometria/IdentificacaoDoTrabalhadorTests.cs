@@ -23,24 +23,54 @@ public sealed class IdentificacaoDoTrabalhadorTests
     }
 
     [Fact]
-    public void O_rosto_identifica_quem_autorizou_enquanto_a_autorizacao_vale()
+    public void O_rosto_conferido_identifica_quem_autorizou_no_instante_da_captura()
     {
-        var identificacao = IdentificacaoDoTrabalhador.PorRosto(Autorizacao(), Exemplos.Em(23, 12, 1));
+        var autorizacao = Autorizacao();
+
+        var identificacao = IdentificacaoDoTrabalhador.PorRosto(autorizacao, RostosDeTeste.JoaoConferido(autorizacao, Exemplos.Em(23, 12, 1)));
 
         Assert.Equal(MeioDeIdentificacao.Rosto, identificacao.Meio);
         Assert.Equal(Exemplos.Construtora.Documento, identificacao.Empregador);
         Assert.Equal(Exemplos.Joao.Cpf, identificacao.Trabalhador);
+        Assert.Equal(Exemplos.Em(23, 12, 1), identificacao.Em);
+    }
+
+    [Fact]
+    public void O_rosto_que_nao_conferiu_nao_identifica()
+    {
+        var autorizacao = Autorizacao();
+        var mariaNoLugarDoJoao = RostosDeTeste.CadastroDoJoao(autorizacao)
+            .Conferir(RostosDeTeste.MariaNaPortaria, RostosDeTeste.Limiar, Exemplos.Em(23, 12, 1));
+
+        var erro = Assert.Throws<ExcecaoDeDominio>(() => IdentificacaoDoTrabalhador.PorRosto(autorizacao, mariaNoLugarDoJoao));
+
+        Assert.Equal("O rosto não conferiu com o cadastro do trabalhador. Tente de novo ou marque pelo código pessoal.", erro.Message);
+    }
+
+    [Fact]
+    public void A_conferencia_de_outro_cadastro_nao_serve()
+    {
+        var doJoao = Autorizacao();
+        var daMaria = AutorizacaoBiometrica.Conceder(Exemplos.Construtora, Exemplos.Maria, Exemplos.Termo, Exemplos.Em(23, 8, 0));
+
+        var erro = Assert.Throws<ExcecaoDeDominio>(() =>
+            IdentificacaoDoTrabalhador.PorRosto(daMaria, RostosDeTeste.JoaoConferido(doJoao, Exemplos.Em(23, 12, 1))));
+
+        Assert.Equal("A conferência do rosto é de outro cadastro que não o da autorização.", erro.Message);
     }
 
     [Fact]
     public void Depois_da_revogacao_o_rosto_nao_identifica_e_o_codigo_pessoal_continua()
     {
         var autorizacao = Autorizacao();
+        var cadastro = RostosDeTeste.CadastroDoJoao(autorizacao);
         autorizacao.Revogar(Exemplos.Em(24, 18, 0));
 
-        var erro = Assert.Throws<ExcecaoDeDominio>(() => IdentificacaoDoTrabalhador.PorRosto(autorizacao, Exemplos.Em(25, 7, 55)));
+        var conferencia = cadastro.Conferir(RostosDeTeste.JoaoNaPortaria, RostosDeTeste.Limiar, Exemplos.Em(25, 7, 55));
+        var erro = Assert.Throws<ExcecaoDeDominio>(() => IdentificacaoDoTrabalhador.PorRosto(autorizacao, conferencia));
         var peloCodigo = IdentificacaoDoTrabalhador.PorCodigoPessoal(Exemplos.Construtora, Exemplos.Joao, Exemplos.Em(25, 7, 55));
 
+        Assert.True(conferencia.Conferiu);
         Assert.Equal(SemAutorizacao, erro.Message);
         Assert.Equal(MeioDeIdentificacao.CodigoPessoal, peloCodigo.Meio);
     }
@@ -48,7 +78,10 @@ public sealed class IdentificacaoDoTrabalhadorTests
     [Fact]
     public void Antes_da_concessao_o_rosto_nao_identifica()
     {
-        var erro = Assert.Throws<ExcecaoDeDominio>(() => IdentificacaoDoTrabalhador.PorRosto(Autorizacao(), Exemplos.Em(23, 7, 59)));
+        var autorizacao = Autorizacao();
+        var conferencia = RostosDeTeste.JoaoConferido(autorizacao, Exemplos.Em(23, 7, 59));
+
+        var erro = Assert.Throws<ExcecaoDeDominio>(() => IdentificacaoDoTrabalhador.PorRosto(autorizacao, conferencia));
 
         Assert.Equal(SemAutorizacao, erro.Message);
     }

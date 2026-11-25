@@ -44,17 +44,33 @@ public sealed class IdentificacaoDoTrabalhador
         return new IdentificacaoDoTrabalhador(empregador.Documento, trabalhador.Cpf, MeioDeIdentificacao.CodigoPessoal, em);
     }
 
-    /// <summary>Pelo rosto, depois que ele conferiu com o modelo guardado: só com a autorização vigente no instante.</summary>
-    public static IdentificacaoDoTrabalhador PorRosto(AutorizacaoBiometrica autorizacao, DateTimeOffset em)
+    /// <summary>
+    /// Pelo rosto: a conferência com o cadastro tem de ter alcançado o
+    /// limiar, ser do trabalhador e do empregador da autorização, e a
+    /// autorização tem de valer no instante da captura, que é o da marcação.
+    /// </summary>
+    public static IdentificacaoDoTrabalhador PorRosto(AutorizacaoBiometrica autorizacao, ConferenciaFacial conferencia)
     {
         ArgumentNullException.ThrowIfNull(autorizacao);
+        ArgumentNullException.ThrowIfNull(conferencia);
 
-        if (!autorizacao.VigenteEm(em))
+        if (!autorizacao.VigenteEm(conferencia.Em))
         {
             throw new ExcecaoDeDominio(
                 "Sem autorização biométrica vigente, o rosto não identifica o trabalhador. O código pessoal continua valendo.");
         }
 
-        return new IdentificacaoDoTrabalhador(autorizacao.Empregador, autorizacao.Trabalhador, MeioDeIdentificacao.Rosto, em);
+        if (conferencia.Empregador != autorizacao.Empregador || conferencia.Trabalhador != autorizacao.Trabalhador)
+        {
+            throw new ExcecaoDeDominio("A conferência do rosto é de outro cadastro que não o da autorização.");
+        }
+
+        if (!conferencia.Conferiu)
+        {
+            throw new ExcecaoDeDominio(
+                "O rosto não conferiu com o cadastro do trabalhador. Tente de novo ou marque pelo código pessoal.");
+        }
+
+        return new IdentificacaoDoTrabalhador(autorizacao.Empregador, autorizacao.Trabalhador, MeioDeIdentificacao.Rosto, conferencia.Em);
     }
 }
