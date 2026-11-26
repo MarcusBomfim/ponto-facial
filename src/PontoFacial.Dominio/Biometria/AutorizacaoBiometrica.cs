@@ -64,6 +64,44 @@ public sealed class AutorizacaoBiometrica
         return new AutorizacaoBiometrica(empregador.Documento, trabalhador.Cpf, termo, em);
     }
 
+    /// <summary>
+    /// A autorização guardada. A encerrada passa de novo pelo encerramento,
+    /// com as mesmas regras, mas sem o pedido de eliminação: ele foi atendido
+    /// quando ela acabou.
+    /// </summary>
+    internal static AutorizacaoBiometrica Reconstituir(
+        Documento empregador,
+        Cpf trabalhador,
+        TermoDeConsentimento termo,
+        DateTimeOffset concedidaEm,
+        DateTimeOffset? encerradaEm,
+        MotivoDoEncerramento? motivo)
+    {
+        ArgumentNullException.ThrowIfNull(empregador);
+        ArgumentNullException.ThrowIfNull(trabalhador);
+        ArgumentNullException.ThrowIfNull(termo);
+
+        var autorizacao = new AutorizacaoBiometrica(empregador, trabalhador, termo, concedidaEm);
+
+        if (encerradaEm.HasValue != motivo.HasValue)
+        {
+            throw new ArgumentException("A autorização encerrada tem a data e o motivo do encerramento; a vigente, nenhum dos dois.", nameof(motivo));
+        }
+
+        if (encerradaEm is { } em && motivo is { } porque)
+        {
+            if (!Enum.IsDefined(porque))
+            {
+                throw new ArgumentOutOfRangeException(nameof(motivo), porque, "Motivo de encerramento que não existe.");
+            }
+
+            autorizacao.Encerrar(porque, em);
+            autorizacao._eventos.Clear();
+        }
+
+        return autorizacao;
+    }
+
     /// <summary>Vale da concessão, inclusive, até o encerramento, exclusive.</summary>
     public bool VigenteEm(DateTimeOffset instante) =>
         instante >= ConcedidaEm && (EncerradaEm is not { } fim || instante < fim);

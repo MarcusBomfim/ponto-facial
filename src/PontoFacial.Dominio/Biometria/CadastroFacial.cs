@@ -95,6 +95,20 @@ public sealed class CadastroFacial
     }
 
     /// <summary>
+    /// O cadastro guardado, com o modelo decifrado. As capturas não ficam:
+    /// foram conferidas entre si quando o cadastro foi feito, e o que se
+    /// guarda é a média delas.
+    /// </summary>
+    internal static CadastroFacial Reconstituir(Documento empregador, Cpf trabalhador, ModeloFacial modelo, DateTimeOffset cadastradoEm)
+    {
+        ArgumentNullException.ThrowIfNull(empregador);
+        ArgumentNullException.ThrowIfNull(trabalhador);
+        ArgumentNullException.ThrowIfNull(modelo);
+
+        return new CadastroFacial(empregador, trabalhador, modelo, cadastradoEm);
+    }
+
+    /// <summary>
     /// Compara com o cadastro o rosto de uma prova de vida aprovada: o do
     /// começo e o do fim, que o acompanhamento liga ao rosto que fez os
     /// movimentos. A similaridade é a menor das duas — os dois têm de ser do

@@ -76,6 +76,29 @@ public sealed class ModeloFacial
     }
 
     /// <summary>
+    /// O vetor guardado, como foi guardado: já com norma 1, e por isso sem
+    /// normalizar de novo — dividir pela norma de novo mexeria nos últimos
+    /// bits, e o vetor lido não seria o gravado.
+    /// </summary>
+    internal static ModeloFacial Reconstituir(string reconhecedor, ReadOnlySpan<float> valores)
+    {
+        var modelo = De(reconhecedor, valores);
+        var somaDosQuadrados = 0.0;
+
+        foreach (var valor in valores)
+        {
+            somaDosQuadrados += (double)valor * valor;
+        }
+
+        if (Math.Abs(Math.Sqrt(somaDosQuadrados) - 1) > 1e-4)
+        {
+            throw new ExcecaoDeDominio("O vetor do rosto guardado não tem norma 1: não é o que o cadastro gravou.");
+        }
+
+        return new ModeloFacial(modelo.Reconhecedor, valores.ToArray());
+    }
+
+    /// <summary>
     /// A similaridade de cosseno entre os dois rostos: 1 é o mesmo vetor, 0 não
     /// tem nada em comum, -1 é o oposto.
     /// </summary>
