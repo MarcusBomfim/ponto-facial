@@ -1,0 +1,21 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <IsTestProject>true</IsTestProject>
+    <TestingPlatformDotnetTestSupport>true</TestingPlatformDotnetTestSupport>
+    <RootNamespace>PontoFacial.EnsaioDaProvaDeVida.Testes</RootNamespace>
+  </PropertyGroup>
+  <ItemGroup>
+    <PackageReference Include="xunit.v3.mtp-v2" />
+  </ItemGroup>
+  <ItemGroup>
+    <Using Include="Xunit" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\..\tools\PontoFacial.EnsaioDaProvaDeVida\PontoFacial.EnsaioDaProvaDeVida.csproj" />
+  </ItemGroup>
+  <ItemGroup>
+    <!-- Os mesmos retratos da NASA dos testes do rosto (ver Imagens/CREDITOS.md lá). -->
+    <None Include="..\PontoFacial.Rosto.Testes\Imagens\*.jpg" Link="Imagens\%(Filename)%(Extension)" CopyToOutputDirectory="PreserveNewest" />
+  </ItemGroup>
+</Project>

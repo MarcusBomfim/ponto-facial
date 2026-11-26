@@ -6,9 +6,11 @@
   <Folder Name="/tests/">
     <Project Path="tests/PontoFacial.Arquitetura.Testes/PontoFacial.Arquitetura.Testes.csproj" />
     <Project Path="tests/PontoFacial.Dominio.Testes/PontoFacial.Dominio.Testes.csproj" />
+    <Project Path="tests/PontoFacial.EnsaioDaProvaDeVida.Testes/PontoFacial.EnsaioDaProvaDeVida.Testes.csproj" />
     <Project Path="tests/PontoFacial.Rosto.Testes/PontoFacial.Rosto.Testes.csproj" />
   </Folder>
   <Folder Name="/tools/">
     <Project Path="tools/PontoFacial.Calibracao/PontoFacial.Calibracao.csproj" />
+    <Project Path="tools/PontoFacial.EnsaioDaProvaDeVida/PontoFacial.EnsaioDaProvaDeVida.csproj" />
   </Folder>
 </Solution>

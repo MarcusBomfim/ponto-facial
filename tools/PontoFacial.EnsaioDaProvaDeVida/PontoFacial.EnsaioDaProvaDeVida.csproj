@@ -1,0 +1,20 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <!--
+    O ensaio da prova de vida (ADR-0008): fotos de uma base organizada por
+    pessoa, como a LFW, viram instrumentos de ataque — paradas, inclinadas,
+    curvadas, dobradas, trocadas — vistos por uma câmera simulada, e passam
+    pela prova de vida de verdade, quadro a quadro. Sessões gravadas com
+    gente de verdade entram como apresentações genuínas.
+  -->
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <RootNamespace>PontoFacial.EnsaioDaProvaDeVida</RootNamespace>
+    <InvariantGlobalization>false</InvariantGlobalization>
+  </PropertyGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\..\src\PontoFacial.Rosto\PontoFacial.Rosto.csproj" />
+  </ItemGroup>
+  <ItemGroup>
+    <InternalsVisibleTo Include="PontoFacial.EnsaioDaProvaDeVida.Testes" />
+  </ItemGroup>
+</Project>

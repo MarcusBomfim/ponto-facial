@@ -1,3 +1,5 @@
+using PontoFacial.Dominio.Biometria;
+
 namespace PontoFacial.Rosto;
 
 /// <summary>Qual rosto tomar quando a imagem tem mais de um.</summary>
@@ -58,9 +60,7 @@ public sealed class ReconhecedorFacial : IDisposable
     {
         ArgumentNullException.ThrowIfNull(imagem);
 
-        var reduzida = imagem.Reduzida(LadoDaDeteccao);
-        var fator = (float)imagem.Largura / reduzida.Largura;
-        var rostos = _detector.Detectar(reduzida);
+        var rostos = Detectar(imagem);
 
         if (rostos.Count == 0)
         {
@@ -72,10 +72,8 @@ public sealed class ReconhecedorFacial : IDisposable
             return ResultadoDaCaptura.Falha(ProblemaNaCaptura.MaisDeUmRosto);
         }
 
-        var centro = new Ponto(reduzida.Largura / 2f, reduzida.Altura / 2f);
-        var rosto = rostos
-            .MinBy(r => MathF.Pow(r.Centro.X - centro.X, 2) + MathF.Pow(r.Centro.Y - centro.Y, 2))!
-            .Escalado(fator);
+        var centro = new Ponto(imagem.Largura / 2f, imagem.Altura / 2f);
+        var rosto = rostos.MinBy(r => MathF.Pow(r.Centro.X - centro.X, 2) + MathF.Pow(r.Centro.Y - centro.Y, 2))!;
 
         if (rosto.Pontos.Any(ponto => ponto.X < 0 || ponto.Y < 0 || ponto.X >= imagem.Largura || ponto.Y >= imagem.Altura))
         {
@@ -88,6 +86,32 @@ public sealed class ReconhecedorFacial : IDisposable
         }
 
         return ResultadoDaCaptura.Sucesso(_extrator.Extrair(imagem, rosto), rosto);
+    }
+
+    /// <summary>
+    /// Os rostos da imagem, nas coordenadas dela. A detecção roda na cópia
+    /// reduzida, como na captura.
+    /// </summary>
+    public IReadOnlyList<RostoDetectado> Detectar(Imagem imagem)
+    {
+        ArgumentNullException.ThrowIfNull(imagem);
+
+        var reduzida = imagem.Reduzida(LadoDaDeteccao);
+        var fator = (float)imagem.Largura / reduzida.Largura;
+
+        return _detector.Detectar(reduzida).Select(rosto => rosto.Escalado(fator)).ToList().AsReadOnly();
+    }
+
+    /// <summary>
+    /// O vetor de um rosto já achado, sem as conferências da captura: a prova
+    /// de vida já sabe, pelo acompanhamento, que é o mesmo rosto do começo.
+    /// </summary>
+    public ModeloFacial Extrair(Imagem imagem, RostoDetectado rosto)
+    {
+        ArgumentNullException.ThrowIfNull(imagem);
+        ArgumentNullException.ThrowIfNull(rosto);
+
+        return _extrator.Extrair(imagem, rosto);
     }
 
     public void Dispose()

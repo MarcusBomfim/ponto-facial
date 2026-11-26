@@ -41,6 +41,9 @@ public sealed class Imagem
         return new Imagem(largura, altura, bgr.ToArray());
     }
 
+    /// <summary>Uma cópia dos pixels, na ordem de <see cref="DeBgr"/>.</summary>
+    public byte[] CopiarBgr() => [.. Bgr];
+
     /// <summary>
     /// Lê um JPEG, PNG ou WebP, e põe a imagem de pé pela orientação que a
     /// câmera gravou: a foto de celular tirada de lado chega deitada.
