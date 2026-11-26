@@ -93,6 +93,14 @@ Registro no INPI: BR512026001234-5
 Hash (SHA-256): a3f002c3cd4c91cc0a2cfa30633f03affd5102961137424dc5bada210bfea3bc
 ```
 
+O RH cadastrou o horário da obra: segunda a sexta das 8h às 12h e das 13h às 17h, sábado das 8h às 12h, com o intervalo pré-assinalado. No fim do dia, o espelho de ponto do art. 84 da Portaria mostra a jornada do João. Ele marcou só a entrada e a saída, às 7h58 e às 17h02. O intervalo entra pelo horário, com a letra P, e as variações de 2 minutos estão na tolerância da CLT (art. 58, § 1º). O dia vale as 8 horas do contrato:
+
+```csharp
+var horario = HorarioContratual.De(semanaDaObra, intervaloPreAssinalado: true);
+var espelho = EspelhoDePonto.Gerar(TratamentoDoPonto.Do(registro, joao.Cpf), joao, horario, CalendarioDeFeriados.Nacionais, dia, dia, Hora(18, 0));
+// seg 23/11  07:58 12:00P 13:00P 17:02   08:00 ...  Tolerância do art. 58
+```
+
 A cadeia confere. Se alguém trocar a entrada para 7h50 nas linhas do arquivo, ela deixa de conferir, e a conferência diz onde:
 
 ```csharp
@@ -156,6 +164,38 @@ Para APCER de até 1% na pior espécie, como a ISO/IEC 30107-3 manda medir, o re
 
 **A falsa rejeição não foi medida.** Medi-la pede gente de verdade fazendo o desafio diante de uma câmera, e as bases públicas de vídeo com o rosto virando são só de pesquisa ou não têm o movimento. A ferramenta mede com sessões gravadas, e a medida com o pessoal de uma empresa fica para a Parte 8. Até lá, o código pessoal está sempre disponível. O [relatório](docs/ensaio/prova-de-vida-lfw.md) traz cada espécie, onde cada ataque parou e o que o ensaio não mede: a luz, as máscaras e os rostos injetados no lugar da câmera (ADR-0008).
 
+### A jornada
+
+A apuração segue o texto da CLT. Em junho de 2025, o TST cancelou as súmulas que liam boa parte dessas regras — a 366, dos minutos antes e depois da jornada; a 437, do intervalo; a OJ 355, do descanso entre jornadas. Por isso cada leitura onde a lei é vaga está escrita na ADR-0010:
+
+- a tolerância de 5 minutos por marcação, até 10 no dia (art. 58, § 1º);
+- as horas noturnas das 22h às 5h, com a hora de 52 min 30 s e a prorrogação de quem começou de noite (art. 73);
+- as extras, separadas das feitas no descanso e no feriado, com aviso acima de 2 horas no dia (art. 59);
+- o intervalo de almoço suprimido (art. 71) e o descanso de 11 horas entre jornadas (art. 66);
+- os feriados nacionais, com o 20 de novembro, e os locais por cadastro.
+
+O tratamento só faz o que o art. 82 da Portaria deixa: inclui a marcação que faltou, desconsidera a indevida e abona o dia, sempre com o motivo, o responsável e a data. O registro continua como estava (ADR-0011).
+
+A semana de 16 a 22 de novembro do João, em [`EspelhoDePontoTests`](tests/PontoFacial.Dominio.Testes/Jornada/EspelhoDePontoTests.cs):
+
+```text
+Dia        Marcações                                 Jornada  Noturna  Extras  Em descanso  Faltas  Ocorrências
+seg 16/11  07:58 12:00P 13:00P 17:02                   08:00    00:00   00:00        00:00   00:00  Tolerância do art. 58
+ter 17/11  07:55 12:00 13:10 17:00                     07:50    00:00   00:00        00:00   00:10  Tolerância do art. 58
+qua 18/11  08:00 12:00 13:00 19:30                     10:30    00:00   02:30        00:00   00:00  Mais de 2 horas extras (art. 59)
+qui 19/11  08:00 12:00 13:00I 17:00I                   08:00    00:00   00:00        00:00   00:00
+sex 20/11                                              00:00    00:00   00:00        00:00   00:00  Feriado: Dia Nacional de Zumbi e da Consciência Negra
+sáb 21/11  08:00 08:01D 12:00                          04:00    00:00   00:00        00:00   00:00
+dom 22/11                                              00:00    00:00   00:00        00:00   00:00  Descanso semanal
+
+Tratamentos:
+  13:00 de 19/11/2026 incluída por 123.456.789-09 em 23/11/2026 07:30: Esqueceu de marcar a volta do almoço; confirmado pelo encarregado.
+  17:00 de 19/11/2026 incluída por 123.456.789-09 em 23/11/2026 07:31: Esqueceu de marcar a saída; confirmado pelo encarregado.
+  08:01 de 21/11/2026 (NSR 16) desconsiderada por 123.456.789-09 em 23/11/2026 07:32: Marcação repetida por engano, um minuto depois da entrada.
+```
+
+Na terça, ele chegou 5 minutos antes, o que fica na tolerância, e voltou do almoço 10 minutos atrasado, o que conta inteiro. Na quinta, esqueceu duas marcações, e o RH as incluiu (I). No sábado, marcou duas vezes, e o RH desconsiderou a repetida (D), que continua no registro.
+
 ## Decisões
 
 As decisões de projeto estão registradas em [`docs/adr`](docs/adr):
@@ -169,6 +209,8 @@ As decisões de projeto estão registradas em [`docs/adr`](docs/adr):
 - [ADR-0007 — A prova de vida pede movimentos sorteados e mede o relevo do nariz](docs/adr/0007-prova-de-vida-por-movimento-sorteado-e-relevo-do-nariz.md)
 - [ADR-0008 — O ataque à prova de vida é medido numa câmera simulada, e a falsa rejeição, com gente](docs/adr/0008-ensaio-simulado-da-prova-de-vida.md)
 - [ADR-0009 — Só a prova de vida aprovada identifica pelo rosto](docs/adr/0009-so-a-prova-de-vida-aprovada-identifica-pelo-rosto.md)
+- [ADR-0010 — A jornada segue o texto da CLT, e cada leitura em aberto fica escrita](docs/adr/0010-jornada-pelo-texto-da-clt.md)
+- [ADR-0011 — O tratamento fica ao lado do registro, e o espelho mostra os dois](docs/adr/0011-tratamento-ao-lado-do-registro-e-espelho-do-art-84.md)
 
 ## Como rodar
 
@@ -201,7 +243,7 @@ O projeto é construído em oito partes, cada uma entregue funcionando, testada 
 | 1 | O domínio: empregador, estabelecimento e trabalhador; o registro de ponto que não se apaga, com NSR por estabelecimento, hash SHA-256 encadeado e o comprovante do art. 79; a autorização biométrica e a alternativa sem biometria | ✅ |
 | 2 | O rosto: detecção e reconhecimento com o ONNX Runtime, o vetor do rosto no lugar da foto, o limiar de aceitação calibrado | ✅ |
 | 3 | A prova de vida: foto de foto, tela de celular e vídeo recusados; métricas da ISO/IEC 30107-3 | ✅ |
-| 4 | A jornada pela CLT: tolerância de 5 e 10 minutos, intervalos, hora noturna reduzida, horas extras e o espelho de ponto do art. 84 | |
+| 4 | A jornada pela CLT: tolerância de 5 e 10 minutos, intervalos, hora noturna reduzida, horas extras e o espelho de ponto do art. 84 | ✅ |
 | 5 | Persistência: PostgreSQL com o vetor do rosto cifrado (AES-GCM, chave por empresa) e cada empresa isolada no banco | |
 | 6 | A API REST e os arquivos da Portaria (AFD e AEJ), o comprovante em PDF assinado e os papéis de RH, gestor e trabalhador | |
 | 7 | O aplicativo: a câmera do celular, o tablet em modo quiosque e a marcação sem biometria, com acessibilidade | |
@@ -247,6 +289,16 @@ O projeto é construído em oito partes, cada uma entregue funcionando, testada 
 - **Só a prova aprovada identifica pelo rosto.** A conferência compara com o cadastro o rosto do começo e o do fim da prova, e a identificação recusa a conferência de um vetor solto: "uma foto dele conferiria do mesmo jeito".
 - **As taxas da ISO/IEC 30107-3**: o APCER por espécie de ataque, com o intervalo de 95% de Wilson, a pior espécie, o BPCER quando há sessões genuínas, e o critério calibrado pela pior espécie com a regra de três.
 - **O ensaio numa câmera simulada.** A ferramenta põe as fotos da LFW em tamanho real diante de uma webcam de 640×480 — planas, curvadas em três eixos, dobradas, trocadas —, com o tremor da mão e o ruído do sensor, e um atacante que segue a tela. Cada imagem é feita raio a raio, e o resto é o sistema de verdade.
+
+**Parte 4 — a jornada pela CLT e o espelho de ponto**
+
+- **O horário do contrato nasce dentro da lei.** O sistema recusa mais de 44 horas na semana, mais de 10 num dia e o dia sem o intervalo do art. 71 — uma hora, ou o da norma coletiva a partir de 30 minutos. Cada recusa diz o artigo. O turno da noite tem a virada do dia fora dele, para a entrada e a saída caírem no mesmo dia de trabalho.
+- **A tolerância do art. 58, § 1º**, marcação por marcação: até 5 minutos não contam, somados até 10 no dia; a variação maior conta inteira.
+- **A hora noturna reduzida:** 7 horas de relógio entre 22h e 5h valem 8, e a prorrogação de quem começou de noite também é noturna.
+- **Extras, faltas e intervalos, dia a dia.** As extras do dia comum ficam separadas das feitas no descanso e no feriado, e passar de 2 horas no dia gera aviso. Atrasos, saídas antecipadas e faltas viram horas faltantes. O intervalo de almoço suprimido e o descanso de 11 horas entre jornadas aparecem no que faltou. Tudo é arredondado ao minuto, e o total é a soma dos dias.
+- **Os feriados nacionais pelas leis federais**, com o 20 de novembro desde 2024; os do estado e do município por cadastro, e a data da Sexta-feira da Paixão calculada.
+- **O tratamento do art. 82.** Ele inclui a marcação que faltou, desconsidera a indevida pelo NSR e abona o dia. Cada um guarda o motivo, quem fez e quando, nada se desfaz, e o registro não muda.
+- **O espelho de ponto do art. 84**, inciso por inciso, com as letras P, I e D, a jornada com a hora noturna reduzida, os totais e a lista dos tratamentos com os motivos.
 
 ## Licença
 

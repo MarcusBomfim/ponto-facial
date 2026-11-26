@@ -2,6 +2,7 @@ using PontoFacial.Dominio.Biometria;
 using PontoFacial.Dominio.Cadastro;
 using PontoFacial.Dominio.Comum;
 using PontoFacial.Dominio.Documentos;
+using PontoFacial.Dominio.Jornada;
 using PontoFacial.Dominio.Registro;
 using PontoFacial.Dominio.Testes.Biometria;
 
@@ -74,6 +75,28 @@ public sealed class ExemploDoReadmeTests
                 "Hash (SHA-256): a3f002c3cd4c91cc0a2cfa30633f03affd5102961137424dc5bada210bfea3bc",
             ],
             registro.Comprovante(saida.Nsr, "BR512026001234-5").Linhas());
+
+        // O horário da obra, com o intervalo pré-assinalado, e o espelho do art. 84.
+        IReadOnlyList<Periodo> util = [new(new(8, 0), new(12, 0)), new(new(13, 0), new(17, 0))];
+        var horario = HorarioContratual.De(
+            new Dictionary<DayOfWeek, IReadOnlyList<Periodo>>
+            {
+                [DayOfWeek.Monday] = util,
+                [DayOfWeek.Tuesday] = util,
+                [DayOfWeek.Wednesday] = util,
+                [DayOfWeek.Thursday] = util,
+                [DayOfWeek.Friday] = util,
+                [DayOfWeek.Saturday] = [new(new(8, 0), new(12, 0))],
+            },
+            intervaloPreAssinalado: true);
+        var tratamento = TratamentoDoPonto.Do(registro, joao.Cpf);
+        var espelho = EspelhoDePonto.Gerar(tratamento, joao, horario, CalendarioDeFeriados.Nacionais, new DateOnly(2026, 11, 23), new DateOnly(2026, 11, 23), Hora(18, 0));
+
+        // 7h58 e 17h02: 2 minutos de cada lado, na tolerância. O dia vale as 8 horas.
+        Assert.Equal(TimeSpan.FromHours(8), espelho.Apuracao.Realizada);
+        Assert.Contains(
+            "seg 23/11  07:58 12:00P 13:00P 17:02                   08:00    00:00   00:00        00:00   00:00  Tolerância do art. 58",
+            espelho.Linhas());
 
         // A cadeia confere. Trocada a entrada para 7h50, deixa de conferir — ali.
         var linhas = registro.Marcacoes.Select(marcacao => marcacao.LinhaDoAfd).ToList();
