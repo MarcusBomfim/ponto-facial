@@ -5,7 +5,7 @@
 
 Um ponto eletrônico com reconhecimento facial, feito dentro da Portaria MTP nº 671/2021 e da LGPD. O trabalhador diz quem é, olha para a câmera do celular ou do tablet da portaria e vira o rosto para onde a tela pede; o rosto confirma, e a prova de vida garante que era ele ali, e não uma foto dele. O sistema grava a marcação numa sequência que não se apaga, amarrada por hash, e entrega o comprovante. Quem não quer biometria marca pelo código pessoal, e a marcação vale o mesmo.
 
-C# 14 · .NET 10 · ONNX Runtime · YuNet · SFace · SkiaSharp · xUnit v3 · GitHub Actions
+C# 14 · .NET 10 · ONNX Runtime · YuNet · SFace · SkiaSharp · PostgreSQL 17 · Npgsql · xUnit v3 · Testcontainers · GitHub Actions
 
 ## O problema
 
@@ -196,6 +196,53 @@ Tratamentos:
 
 Na terça, ele chegou 5 minutos antes, o que fica na tolerância, e voltou do almoço 10 minutos atrasado, o que conta inteiro. Na quinta, esqueceu duas marcações, e o RH as incluiu (I). No sábado, marcou duas vezes, e o RH desconsiderou a repetida (D), que continua no registro.
 
+### O banco
+
+O cadastro, o registro de ponto, o tratamento e a biometria vão para o PostgreSQL. O exemplo está em [`ExemploDoReadmeNoBancoTests`](tests/PontoFacial.Persistencia.Testes/ExemploDoReadmeNoBancoTests.cs). Cada empregador é uma empresa no banco, e cada empresa só vê o que é dela: a segurança por linha filtra toda consulta, e não depende de quem escreve o SQL lembrar do `where` (ADR-0012).
+
+```csharp
+var pontoNoBanco = new BancoDoPonto(fonteDaAplicacao); // um usuário membro do papel ponto_aplicacao
+var horizonte = await pontoNoBanco.Cadastrar(construtora);
+var obra = await horizonte.Estabelecimentos.Cadastrar(Estabelecimento.Novo(construtora, "Rua das Palmeiras, 100 - Santos/SP", "America/Sao_Paulo"));
+await horizonte.Trabalhadores.Gravar(joao);
+await horizonte.Registros.Abrir(obra, rh, Hora(6, 0));
+await horizonte.Registros.Gravar(obra, registro => registro.IncluirTrabalhador(joao, rh, Hora(6, 1)));
+```
+
+O modelo do rosto vai cifrado com AES-256-GCM, pela chave da empresa. Essa chave fica no banco embrulhada pela chave mestra, e a chave mestra fica fora dele (ADR-0014). A cifra é amarrada à linha: copiada para outro trabalhador, ou para outra empresa, não abre.
+
+```csharp
+var biometria = horizonte.Biometria(chaveMestra);
+await biometria.Autorizacoes.Conceder(autorizacao);
+await biometria.Cadastros.Gravar(cadastro);
+// no banco: um nonce de 12 bytes e 528 de cifra para os 128 números, com a versão 1 da chave da empresa
+```
+
+Para marcar, o registro não é lido inteiro. O banco devolve a ponta: o último NSR, o relógio, o hash da última marcação e quem está incluído. O domínio continua dali, na fila do estabelecimento, e duas marcações ao mesmo tempo gravam uma depois da outra (ADR-0013):
+
+```csharp
+var cadastro = await biometria.Cadastros.Obter(joao.Cpf);
+var conferencia = cadastro.Conferir(provaNaPortaria, limiar);
+var entrada = await horizonte.Registros.Gravar(obra, registro => registro.MarcarOnLine(IdentificacaoDoTrabalhador.PorRosto(autorizacao, conferencia), Coletor.DispositivoEletronico));
+// entrada.Hash: 7221a9802299bd7a0cd9b4b9813d9872d5a6a0c07311eab15ce5123e913a41bd, o mesmo do exemplo em memória
+```
+
+Na revogação, o modelo sai na mesma transação em que a autorização acaba, e a autorização fica, encerrada, como prova do consentimento. O banco confere de novo e recusa a autorização que acaba com o modelo ainda gravado:
+
+```csharp
+await biometria.Autorizacoes.Encerrar(joao.Cpf, autorizacao => autorizacao.Revogar(Hora(12, 30)));
+// o ModeloFacialDeveSerEliminado foi atendido: Cadastros.Obter(joao.Cpf) é nulo
+```
+
+O que o domínio garante, o banco também garante sozinho: a numeração sem buraco, o hash de cada marcação refeito num `check`, a cadeia sem galho e a tabela que só cresce. Nem o dono do banco altera a entrada:
+
+```sql
+update ponto.operacoes set marcada_em = marcada_em - interval '8 minutes' where nsr = 3;
+-- ERROR: A tabela operacoes só cresce: o que foi gravado não se altera nem se apaga (Portaria 671, anexo IX, item 7).
+```
+
+O superusuário pode desligar o gatilho, mas a leitura o pega do mesmo jeito: ela refaz o hash de cada marcação a partir das colunas e confere a numeração e a cadeia.
+
 ## Decisões
 
 As decisões de projeto estão registradas em [`docs/adr`](docs/adr):
@@ -211,6 +258,9 @@ As decisões de projeto estão registradas em [`docs/adr`](docs/adr):
 - [ADR-0009 — Só a prova de vida aprovada identifica pelo rosto](docs/adr/0009-so-a-prova-de-vida-aprovada-identifica-pelo-rosto.md)
 - [ADR-0010 — A jornada segue o texto da CLT, e cada leitura em aberto fica escrita](docs/adr/0010-jornada-pelo-texto-da-clt.md)
 - [ADR-0011 — O tratamento fica ao lado do registro, e o espelho mostra os dois](docs/adr/0011-tratamento-ao-lado-do-registro-e-espelho-do-art-84.md)
+- [ADR-0012 — O banco é o PostgreSQL, com SQL escrito à mão, e cada empresa só vê o que é dela](docs/adr/0012-postgresql-com-sql-a-mao-e-cada-empresa-isolada.md)
+- [ADR-0013 — No banco, o registro só cresce, o próprio banco confere o NSR e o hash, e o registro se retoma pela ponta](docs/adr/0013-o-banco-confere-o-nsr-e-o-hash-e-o-registro-se-retoma-pela-ponta.md)
+- [ADR-0014 — O vetor do rosto é cifrado com AES-256-GCM, com uma chave por empresa embrulhada pela chave mestra](docs/adr/0014-vetor-cifrado-com-aes-gcm-e-chave-por-empresa.md)
 
 ## Como rodar
 
@@ -221,6 +271,8 @@ dotnet test --solution PontoFacial.slnx
 ```
 
 A primeira compilação baixa os dois modelos de rosto do OpenCV Zoo (37 MB) para `modelos/` e confere o SHA-256 de cada um. O CI roda o mesmo, com a formatação conferida antes: `dotnet format PontoFacial.slnx --verify-no-changes`.
+
+Os testes da persistência sobem um PostgreSQL 17.6 num contêiner, pelo Testcontainers, e precisam do Docker. Sem ele, fora do CI, são pulados e dizem por quê; no CI, a falta do Docker é falha.
 
 Para calibrar o limiar numa base de fotos com uma pasta por pessoa, como a LFW:
 
@@ -244,7 +296,7 @@ O projeto é construído em oito partes, cada uma entregue funcionando, testada 
 | 2 | O rosto: detecção e reconhecimento com o ONNX Runtime, o vetor do rosto no lugar da foto, o limiar de aceitação calibrado | ✅ |
 | 3 | A prova de vida: foto de foto, tela de celular e vídeo recusados; métricas da ISO/IEC 30107-3 | ✅ |
 | 4 | A jornada pela CLT: tolerância de 5 e 10 minutos, intervalos, hora noturna reduzida, horas extras e o espelho de ponto do art. 84 | ✅ |
-| 5 | Persistência: PostgreSQL com o vetor do rosto cifrado (AES-GCM, chave por empresa) e cada empresa isolada no banco | |
+| 5 | Persistência: PostgreSQL com o vetor do rosto cifrado (AES-GCM, chave por empresa) e cada empresa isolada no banco | ✅ |
 | 6 | A API REST e os arquivos da Portaria (AFD e AEJ), o comprovante em PDF assinado e os papéis de RH, gestor e trabalhador | |
 | 7 | O aplicativo: a câmera do celular, o tablet em modo quiosque e a marcação sem biometria, com acessibilidade | |
 | 8 | Erro por grupo e relatório de impacto (RIPD), observabilidade, Docker e entrega contínua | |
@@ -299,6 +351,22 @@ O projeto é construído em oito partes, cada uma entregue funcionando, testada 
 - **Os feriados nacionais pelas leis federais**, com o 20 de novembro desde 2024; os do estado e do município por cadastro, e a data da Sexta-feira da Paixão calculada.
 - **O tratamento do art. 82.** Ele inclui a marcação que faltou, desconsidera a indevida pelo NSR e abona o dia. Cada um guarda o motivo, quem fez e quando, nada se desfaz, e o registro não muda.
 - **O espelho de ponto do art. 84**, inciso por inciso, com as letras P, I e D, a jornada com a hora noturna reduzida, os totais e a lista dos tratamentos com os motivos.
+
+**Parte 5 — o banco**
+
+- **O PostgreSQL, com SQL escrito à mão.** O Npgsql roda comandos de texto constante, com os parâmetros por posição, sem ORM. As migrações são arquivos SQL numerados, aplicados em ordem numa transação. O banco guarda o SHA-256 de cada uma e recusa a que mudou depois de aplicada.
+- **Cada empresa isolada no banco.** Toda tabela tem segurança por linha, forçada, pelo parâmetro da transação, que some no commit. A aplicação entra com um papel que não é dono de nada e não tem update nem delete no registro. Uma consulta sem `where` só vê a empresa da transação; sem empresa, não vê nada.
+- **O registro que só cresce, conferido pelo banco.**
+  - A chave estrangeira para o NSR anterior não deixa buraco na numeração.
+  - Um `check` refaz o SHA-256 de cada marcação.
+  - O hash anterior só pode apontar para a última marcação.
+  - Um gatilho recusa update, delete e truncate, até do dono das tabelas.
+- **Marcar sem ler o registro inteiro.** O banco devolve a ponta por índices, e o domínio retoma o registro por ela. Com 200 mil operações, cada consulta da ponta levou menos de 0,1 ms. Na fila de cada estabelecimento, 40 marcações feitas ao mesmo tempo entram todas, com a numeração e a cadeia inteiras.
+- **A leitura confere de novo.** Cada marcação é refeita pelo domínio e comparada com o hash gravado, e a página lida tem de trazer os NSRs seguidos e a cadeia inteira. A hora trocada, o hash refeito, a operação apagada e o CPF que não confere são pegos, mesmo com os gatilhos desligados pelo superusuário.
+- **O tratamento também só cresce**, numa sequência sem buraco por trabalhador. Ele volta do banco repetido passo a passo pelas regras do domínio, e o espelho da semana do João lido do banco é o mesmo da memória, linha por linha.
+- **O vetor do rosto cifrado com AES-256-GCM**, pela chave da empresa, embrulhada pela chave mestra, que fica fora do banco. A cifra é amarrada à empresa, ao CPF e à autorização, e colada em outra linha não abre. Nenhum trecho do vetor aparece no banco.
+- **O modelo sai quando a autorização acaba**, na mesma transação, e o banco recusa a autorização que acaba com o modelo ainda lá. A autorização encerrada não reabre nem se apaga. O termo guarda o texto que o trabalhador leu, e o banco confere o hash dele.
+- **As chaves giram sem parar o sistema.** A chave da empresa ganha uma versão nova, os modelos são cifrados de novo e a antiga é descartada. Para trocar a chave mestra, as chaves das empresas são embrulhadas de novo, sem tocar nos modelos.
 
 ## Licença
 
