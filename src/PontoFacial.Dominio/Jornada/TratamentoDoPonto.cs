@@ -1,4 +1,5 @@
 using System.Globalization;
+using PontoFacial.Dominio.Cadastro;
 using PontoFacial.Dominio.Comum;
 using PontoFacial.Dominio.Documentos;
 using PontoFacial.Dominio.Registro;
@@ -90,19 +91,25 @@ public sealed class TratamentoDoPonto
     /// <summary>O motivo cabe em 150 caracteres.</summary>
     public const int TamanhoDoMotivo = 150;
 
+    private const string NaoIncluido = "O trabalhador não foi incluído neste registro de ponto.";
+
     private static readonly CultureInfo PtBr = CultureInfo.GetCultureInfo("pt-BR");
 
     private readonly List<MarcacaoTratada> _marcacoes = [];
 
     private readonly Dictionary<DateOnly, AbonoDoDia> _abonos = [];
 
-    private TratamentoDoPonto(RegistroDePonto registro, Cpf trabalhador)
+    private readonly Func<IReadOnlyList<MarcacaoDePonto>> _registradas;
+
+    private TratamentoDoPonto(Estabelecimento estabelecimento, Cpf trabalhador, Func<IReadOnlyList<MarcacaoDePonto>> registradas)
     {
-        Registro = registro;
+        Estabelecimento = estabelecimento;
         Trabalhador = trabalhador;
+        _registradas = registradas;
     }
 
-    public RegistroDePonto Registro { get; }
+    /// <summary>O estabelecimento do registro de ponto, com o fuso em que as marcações são lidas.</summary>
+    public Estabelecimento Estabelecimento { get; }
 
     public Cpf Trabalhador { get; }
 
@@ -113,21 +120,61 @@ public sealed class TratamentoDoPonto
     public IReadOnlyDictionary<DateOnly, AbonoDoDia> Abonos => _abonos.AsReadOnly();
 
     /// <summary>O tratamento do trabalhador, que tem de ter sido incluído no registro.</summary>
+    /// <remarks>
+    /// O registro tem de estar inteiro em memória: o tratamento lê dele as
+    /// marcações do trabalhador, inclusive as que forem feitas depois. O
+    /// registro retomado do banco só pela ponta não tem as de antes, e o
+    /// tratamento, nesse caso, se lê do banco.
+    /// </remarks>
     public static TratamentoDoPonto Do(RegistroDePonto registro, Cpf trabalhador)
     {
         ArgumentNullException.ThrowIfNull(registro);
         ArgumentNullException.ThrowIfNull(trabalhador);
 
-        if (!registro.Operacoes.OfType<MudancaNoTrabalhador>().Any(mudanca => mudanca.Cpf == trabalhador && mudanca.Mudanca == TipoDeMudanca.Inclusao))
+        if (!registro.Inteiro)
         {
-            throw new ExcecaoDeDominio("O trabalhador não foi incluído neste registro de ponto.");
+            throw new InvalidOperationException(
+                "Este registro foi retomado do banco pela ponta, sem as operações já gravadas: o tratamento do trabalhador se lê do banco, com as marcações dele.");
         }
 
-        return new TratamentoDoPonto(registro, trabalhador);
+        if (!registro.Operacoes.OfType<MudancaNoTrabalhador>().Any(mudanca => mudanca.Cpf == trabalhador && mudanca.Mudanca == TipoDeMudanca.Inclusao))
+        {
+            throw new ExcecaoDeDominio(NaoIncluido);
+        }
+
+        return new TratamentoDoPonto(registro.Estabelecimento, trabalhador, () => [.. registro.Marcacoes.Where(marcacao => marcacao.Cpf == trabalhador)]);
+    }
+
+    /// <summary>
+    /// O tratamento vazio, sobre as marcações do trabalhador lidas do banco.
+    /// Quem o refaz repete cada tratamento gravado, na ordem em que foi feito,
+    /// pelos métodos de sempre: o que volta do banco passa pelas mesmas
+    /// regras do que entrou.
+    /// </summary>
+    internal static TratamentoDoPonto Reconstituir(Estabelecimento estabelecimento, Cpf trabalhador, bool incluidoNoRegistro, IReadOnlyList<MarcacaoDePonto> registradas)
+    {
+        ArgumentNullException.ThrowIfNull(estabelecimento);
+        ArgumentNullException.ThrowIfNull(trabalhador);
+        ArgumentNullException.ThrowIfNull(registradas);
+
+        if (!incluidoNoRegistro)
+        {
+            throw new ExcecaoDeDominio(NaoIncluido);
+        }
+
+        for (var i = 0; i < registradas.Count; i++)
+        {
+            if (registradas[i].Cpf != trabalhador || (i > 0 && registradas[i].Nsr <= registradas[i - 1].Nsr))
+            {
+                throw new ArgumentException("As marcações registradas têm de ser só do trabalhador, em ordem de NSR.", nameof(registradas));
+            }
+        }
+
+        return new TratamentoDoPonto(estabelecimento, trabalhador, () => registradas);
     }
 
     /// <summary>As marcações do trabalhador no registro, na ordem do NSR, desconsideradas ou não.</summary>
-    public IReadOnlyList<MarcacaoDePonto> Registradas() => [.. Registro.Marcacoes.Where(marcacao => marcacao.Cpf == Trabalhador)];
+    public IReadOnlyList<MarcacaoDePonto> Registradas() => _registradas();
 
     /// <summary>As que contam: as do registro que não foram desconsideradas e as incluídas, em ordem.</summary>
     public IReadOnlyList<DateTimeOffset> Consideradas()
@@ -148,7 +195,7 @@ public sealed class TratamentoDoPonto
         ArgumentNullException.ThrowIfNull(responsavel);
 
         var limpo = Textos.Obrigatorio(motivo, "o motivo do tratamento", TamanhoDoMotivo);
-        var local = AoMinuto(Registro.Estabelecimento.NaHoraLocal(marcadaEm));
+        var local = AoMinuto(Estabelecimento.NaHoraLocal(marcadaEm));
 
         if (local > em)
         {

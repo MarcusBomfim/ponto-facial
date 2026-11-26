@@ -9,6 +9,10 @@
     o SkiaSharp lê as imagens. Os dois têm licença MIT. O pacote de Linux sem
     dependências traz a biblioteca nativa do Skia sem pedir o fontconfig da
     máquina, que o contêiner e o CI não têm.
+
+    O banco (ADR-0012): o Npgsql, licença PostgreSQL, na mesma versão do
+    crm-obras; o Testcontainers, licença MIT, sobe um PostgreSQL de verdade
+    para os testes.
   -->
   <PropertyGroup>
     <ManagePackageVersionsCentrally>true</ManagePackageVersionsCentrally>
@@ -16,8 +20,10 @@
   </PropertyGroup>
   <ItemGroup>
     <PackageVersion Include="Microsoft.ML.OnnxRuntime" Version="1.31.1" />
+    <PackageVersion Include="Npgsql" Version="10.0.3" />
     <PackageVersion Include="SkiaSharp" Version="4.153.0" />
     <PackageVersion Include="SkiaSharp.NativeAssets.Linux.NoDependencies" Version="4.153.0" />
+    <PackageVersion Include="Testcontainers.PostgreSql" Version="4.16.0" />
     <PackageVersion Include="xunit.v3.mtp-v2" Version="4.0.2" />
   </ItemGroup>
 </Project>

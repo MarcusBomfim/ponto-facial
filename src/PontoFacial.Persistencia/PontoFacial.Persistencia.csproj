@@ -1,0 +1,30 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <!--
+    O PostgreSQL: o cadastro, o registro de ponto que só cresce, o tratamento
+    e, cifrado, o modelo do rosto. SQL escrito à mão, pelo Npgsql, sem ORM
+    (ADR-0012): o que este projeto guarda é uma sequência que só recebe
+    inserções, e boa parte das regras está nas restrições do próprio banco.
+
+    As migrações são arquivos .sql embutidos no assembly, aplicados em ordem
+    e conferidos pelo SHA-256 de cada um.
+  -->
+  <PropertyGroup>
+    <RootNamespace>PontoFacial.Persistencia</RootNamespace>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Npgsql" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\PontoFacial.Dominio\PontoFacial.Dominio.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <EmbeddedResource Include="Migracoes\*.sql" LogicalName="Migracoes.%(Filename)%(Extension)" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <InternalsVisibleTo Include="PontoFacial.Persistencia.Testes" />
+  </ItemGroup>
+</Project>

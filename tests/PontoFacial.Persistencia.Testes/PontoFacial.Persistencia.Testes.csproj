@@ -1,0 +1,32 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <IsTestProject>true</IsTestProject>
+    <TestingPlatformDotnetTestSupport>true</TestingPlatformDotnetTestSupport>
+    <RootNamespace>PontoFacial.Persistencia.Testes</RootNamespace>
+  </PropertyGroup>
+  <ItemGroup>
+    <PackageReference Include="Testcontainers.PostgreSql" />
+    <PackageReference Include="xunit.v3.mtp-v2" />
+  </ItemGroup>
+  <ItemGroup>
+    <Using Include="Xunit" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\..\src\PontoFacial.Persistencia\PontoFacial.Persistencia.csproj" />
+  </ItemGroup>
+  <!--
+    O empregador, a obra, o João e a semana dele, e os rostos de teste, dos
+    testes do domínio, compilados aqui também: o que se grava e se lê é
+    exatamente o que o domínio já conferiu. Seis arquivos não justificam uma
+    biblioteca de testes compartilhada.
+  -->
+  <ItemGroup>
+    <Compile Include="..\PontoFacial.Dominio.Testes\Exemplos.cs" Link="Exemplos\Exemplos.cs" />
+    <Compile Include="..\PontoFacial.Dominio.Testes\Registro\RegistroDeExemplo.cs" Link="Exemplos\RegistroDeExemplo.cs" />
+    <Compile Include="..\PontoFacial.Dominio.Testes\Jornada\Horarios.cs" Link="Exemplos\Horarios.cs" />
+    <Compile Include="..\PontoFacial.Dominio.Testes\Jornada\SemanaDoJoao.cs" Link="Exemplos\SemanaDoJoao.cs" />
+    <Compile Include="..\PontoFacial.Dominio.Testes\Biometria\RostosDeTeste.cs" Link="Exemplos\RostosDeTeste.cs" />
+    <Compile Include="..\PontoFacial.Dominio.Testes\Biometria\Vivacidade\Cenas.cs" Link="Exemplos\Cenas.cs" />
+  </ItemGroup>
+</Project>

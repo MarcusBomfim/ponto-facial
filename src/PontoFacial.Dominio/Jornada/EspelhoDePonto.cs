@@ -43,7 +43,7 @@ public sealed class EspelhoDePonto
         EmitidoEm = emitidoEm;
     }
 
-    public Empregador Empregador => Tratamento.Registro.Estabelecimento.Empregador;
+    public Empregador Empregador => Tratamento.Estabelecimento.Empregador;
 
     public Trabalhador Trabalhador { get; }
 
@@ -74,7 +74,7 @@ public sealed class EspelhoDePonto
             throw new ExcecaoDeDominio("O tratamento é de outro trabalhador.");
         }
 
-        var fuso = tratamento.Registro.Estabelecimento.Fuso;
+        var fuso = tratamento.Estabelecimento.Fuso;
         var consideradas = tratamento.Consideradas();
         var antes = consideradas.Where(marcacao => DiaDe(marcacao, horario, fuso) < de).ToList();
         var abonos = tratamento.Abonos.ToDictionary(par => par.Key, par => par.Value.Motivo);
@@ -98,12 +98,12 @@ public sealed class EspelhoDePonto
             linhas.Add($"CEI/CAEPF/CNO: {cei}");
         }
 
-        var fuso = Tratamento.Registro.Estabelecimento.Fuso;
+        var fuso = Tratamento.Estabelecimento.Fuso;
         var emitido = TimeZoneInfo.ConvertTime(EmitidoEm, fuso);
 
         linhas.AddRange(
         [
-            $"Local: {Tratamento.Registro.Estabelecimento.Local}",
+            $"Local: {Tratamento.Estabelecimento.Local}",
             $"Trabalhador: {Trabalhador.Nome}",
             $"CPF: {Trabalhador.Cpf.Formatado}",
             string.Create(PtBr, $"Admissão: {Trabalhador.Admissao:dd/MM/yyyy}"),

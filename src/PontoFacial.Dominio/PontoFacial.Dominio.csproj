@@ -8,4 +8,17 @@
   <PropertyGroup>
     <RootNamespace>PontoFacial.Dominio</RootNamespace>
   </PropertyGroup>
+  <!--
+    A persistência refaz os objetos gravados pelos caminhos internos — a
+    retomada do registro pela ponta, as operações com os campos lidos do
+    banco —, que não fazem parte do que o resto do sistema pode chamar
+    (ADR-0012). Os testes do domínio conferem esses caminhos sem banco, e os
+    da persistência comparam a ponta lida do banco com a do registro que não
+    saiu da memória.
+  -->
+  <ItemGroup>
+    <InternalsVisibleTo Include="PontoFacial.Persistencia" />
+    <InternalsVisibleTo Include="PontoFacial.Dominio.Testes" />
+    <InternalsVisibleTo Include="PontoFacial.Persistencia.Testes" />
+  </ItemGroup>
 </Project>
