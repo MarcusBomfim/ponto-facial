@@ -15,6 +15,28 @@ public sealed class LimiaresCalibradosTests
     }
 
     [Fact]
+    public void O_criterio_da_prova_de_vida_e_o_do_ensaio_e_diz_de_onde_veio()
+    {
+        var criterio = LimiaresCalibrados.ProvaDeVidaNaLfw;
+
+        Assert.Equal(0.157, criterio.RelevoMinimo);
+        Assert.Equal("ensaio simulado na lfw (300 por espécie, 8 espécies), APCER 1%, 2026-11-25", criterio.Origem);
+        Assert.Contains("o relevo mínimo é **0,157**", File.ReadAllText(Path.Combine(Raiz(), "docs", "ensaio", "prova-de-vida-lfw.md")), StringComparison.Ordinal);
+    }
+
+    private static string Raiz()
+    {
+        var pasta = new DirectoryInfo(AppContext.BaseDirectory);
+
+        while (!File.Exists(Path.Combine(pasta!.FullName, "PontoFacial.slnx")))
+        {
+            pasta = pasta.Parent;
+        }
+
+        return pasta.FullName;
+    }
+
+    [Fact]
     public void Com_o_limiar_da_lfw_a_sunita_de_2012_confere_com_o_cadastro_de_2004_e_o_pontes_nao()
     {
         var limiar = LimiaresCalibrados.SFaceNaLfw;

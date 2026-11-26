@@ -46,8 +46,9 @@ public sealed class IdentificacaoDoTrabalhador
 
     /// <summary>
     /// Pelo rosto: a conferência com o cadastro tem de ter alcançado o
-    /// limiar, ser do trabalhador e do empregador da autorização, e a
-    /// autorização tem de valer no instante da captura, que é o da marcação.
+    /// limiar, ser do trabalhador e do empregador da autorização, e ter saído
+    /// de uma prova de vida aprovada; a autorização tem de valer no instante
+    /// da captura, que é o da marcação.
     /// </summary>
     public static IdentificacaoDoTrabalhador PorRosto(AutorizacaoBiometrica autorizacao, ConferenciaFacial conferencia)
     {
@@ -63,6 +64,12 @@ public sealed class IdentificacaoDoTrabalhador
         if (conferencia.Empregador != autorizacao.Empregador || conferencia.Trabalhador != autorizacao.Trabalhador)
         {
             throw new ExcecaoDeDominio("A conferência do rosto é de outro cadastro que não o da autorização.");
+        }
+
+        if (conferencia.Prova is not { Aprovada: true })
+        {
+            throw new ExcecaoDeDominio(
+                "Sem prova de vida aprovada, o rosto não identifica o trabalhador: uma foto dele conferiria do mesmo jeito.");
         }
 
         if (!conferencia.Conferiu)

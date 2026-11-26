@@ -1,5 +1,7 @@
 using PontoFacial.Dominio.Biometria;
+using PontoFacial.Dominio.Biometria.Vivacidade;
 using PontoFacial.Dominio.Comum;
+using PontoFacial.Dominio.Testes.Biometria.Vivacidade;
 
 namespace PontoFacial.Dominio.Testes.Biometria;
 
@@ -99,6 +101,50 @@ public sealed class CadastroFacialTests
         var erro = Assert.Throws<ExcecaoDeDominio>(() => cadastro.Conferir(CapturasDoJoao[0], deOutro, Exemplos.Em(24, 7, 58)));
 
         Assert.Equal("O limiar é do reconhecedor sface-2021dec, e o cadastro, do teste-4d.", erro.Message);
+    }
+
+    [Fact]
+    public void A_conferencia_pela_prova_de_vida_tem_o_instante_e_a_prova()
+    {
+        var cadastro = CadastroFacial.Cadastrar(Autorizacao(), CapturasDoJoao, Limiar, Exemplos.Em(23, 8, 0));
+        var prova = RostosDeTeste.Prova(RostosDeTeste.JoaoNaPortaria, Exemplos.Em(24, 7, 58));
+
+        var conferencia = cadastro.Conferir(prova, Limiar);
+
+        Assert.True(conferencia.Conferiu);
+        Assert.Same(prova, conferencia.Prova);
+        Assert.Equal(Exemplos.Em(24, 7, 58), conferencia.Em);
+        Assert.Equal(cadastro.Modelo.Similaridade(RostosDeTeste.JoaoNaPortaria), conferencia.Similaridade, 9);
+    }
+
+    [Fact]
+    public void Os_rostos_do_comeco_e_do_fim_da_prova_tem_de_conferir_os_dois()
+    {
+        /*
+         * O João começa a prova e a Maria termina: o acompanhamento não
+         * deixaria, mas, se deixasse, a conferência ficaria com o pior dos
+         * dois rostos e recusaria.
+         */
+        var cadastro = CadastroFacial.Cadastrar(Autorizacao(), CapturasDoJoao, Limiar, Exemplos.Em(23, 8, 0));
+        var trocada = RostosDeTeste.Prova(RostosDeTeste.JoaoNaPortaria, RostoDaMaria, Exemplos.Em(24, 7, 58));
+
+        var conferencia = cadastro.Conferir(trocada, Limiar);
+
+        Assert.False(conferencia.Conferiu);
+        Assert.Equal(cadastro.Modelo.Similaridade(RostoDaMaria), conferencia.Similaridade, 9);
+    }
+
+    [Fact]
+    public void A_prova_de_vida_recusada_nao_se_confere()
+    {
+        var cadastro = CadastroFacial.Cadastrar(Autorizacao(), CapturasDoJoao, Limiar, Exemplos.Em(23, 8, 0));
+        var desafio = Desafio.De([Movimento.Esquerda, Movimento.Cima, Movimento.Direita]);
+        var sessao = Cenas.Iniciar(Cenas.Cabeca, desafio);
+        sessao.Registrar(new QuadroDaCamera(Cenas.Quadro(1), null));
+
+        var erro = Assert.Throws<ExcecaoDeDominio>(() => cadastro.Conferir(sessao.Resultado!, Limiar));
+
+        Assert.Equal("A prova de vida não passou: não há rosto para conferir com o cadastro.", erro.Message);
     }
 
     private static AutorizacaoBiometrica Autorizacao() =>

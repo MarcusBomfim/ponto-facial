@@ -1,11 +1,13 @@
 using PontoFacial.Dominio.Biometria;
+using PontoFacial.Dominio.Biometria.Vivacidade;
+using PontoFacial.Dominio.Testes.Biometria.Vivacidade;
 
 namespace PontoFacial.Dominio.Testes.Biometria;
 
 /// <summary>
 /// Rostos de mentira, em quatro dimensões, para os testes do domínio: o do
 /// João aponta para um lado, o da Maria para outro. Na vida real, os vetores
-/// saem do reconhecedor.
+/// saem do reconhecedor, e a prova de vida, da câmera.
 /// </summary>
 internal static class RostosDeTeste
 {
@@ -26,7 +28,29 @@ internal static class RostosDeTeste
     public static CadastroFacial CadastroDoJoao(AutorizacaoBiometrica autorizacao) =>
         CadastroFacial.Cadastrar(autorizacao, CapturasDoJoao, Limiar, autorizacao.ConcedidaEm);
 
-    /// <summary>O rosto do João conferido com o cadastro dele, no instante dado.</summary>
+    /// <summary>
+    /// Uma prova de vida aprovada que termina no instante dado: a cabeça de
+    /// teste segue o desafio, com o rosto dado no começo e no fim.
+    /// </summary>
+    public static ProvaDeVida Prova(ModeloFacial rosto, DateTimeOffset em) => Prova(rosto, rosto, em);
+
+    /// <summary>A prova com um rosto no começo e outro no fim.</summary>
+    public static ProvaDeVida Prova(ModeloFacial noComeco, ModeloFacial noFim, DateTimeOffset em)
+    {
+        var desafio = Desafio.De([Movimento.Esquerda, Movimento.Cima, Movimento.Direita]);
+        var quadros = Cenas.Seguindo(Cenas.Cabeca, desafio, Cenas.Obedecendo);
+        var deslocamento = em - quadros[^1].Em;
+        var sessao = SessaoDaProvaDeVida.Iniciar(desafio, Cenas.Criterio, new QuadroDaCamera(Cenas.Quadro(0) + deslocamento, Cenas.Ver(Cenas.Cabeca), noComeco));
+
+        foreach (var quadro in quadros)
+        {
+            sessao.Registrar(quadro with { Em = quadro.Em + deslocamento, Modelo = quadro.Modelo is null ? null : noFim });
+        }
+
+        return sessao.Resultado!;
+    }
+
+    /// <summary>O rosto do João, numa prova de vida, conferido com o cadastro dele no instante dado.</summary>
     public static ConferenciaFacial JoaoConferido(AutorizacaoBiometrica autorizacao, DateTimeOffset em) =>
-        CadastroDoJoao(autorizacao).Conferir(JoaoNaPortaria, Limiar, em);
+        CadastroDoJoao(autorizacao).Conferir(Prova(JoaoNaPortaria, em), Limiar);
 }

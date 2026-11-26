@@ -1,4 +1,5 @@
 using System.Globalization;
+using PontoFacial.Dominio.Biometria.Vivacidade;
 using PontoFacial.Dominio.Comum;
 using PontoFacial.Dominio.Documentos;
 
@@ -93,18 +94,48 @@ public sealed class CadastroFacial
         return new CadastroFacial(autorizacao.Empregador, autorizacao.Trabalhador, ModeloFacial.Media(capturas), em);
     }
 
-    /// <summary>Compara o rosto capturado com o cadastro.</summary>
+    /// <summary>
+    /// Compara com o cadastro o rosto de uma prova de vida aprovada: o do
+    /// começo e o do fim, que o acompanhamento liga ao rosto que fez os
+    /// movimentos. A similaridade é a menor das duas — os dois têm de ser do
+    /// trabalhador.
+    /// </summary>
+    public ConferenciaFacial Conferir(ProvaDeVida prova, LimiarDeAceitacao limiar)
+    {
+        ArgumentNullException.ThrowIfNull(prova);
+        ArgumentNullException.ThrowIfNull(limiar);
+        ConferirReconhecedor(limiar);
+
+        if (!prova.Aprovada || prova.ModeloInicial is null || prova.ModeloFinal is null)
+        {
+            throw new ExcecaoDeDominio("A prova de vida não passou: não há rosto para conferir com o cadastro.");
+        }
+
+        var similaridade = Math.Min(Modelo.Similaridade(prova.ModeloInicial), Modelo.Similaridade(prova.ModeloFinal));
+
+        return new ConferenciaFacial(Empregador, Trabalhador, similaridade, limiar, prova.Em, prova);
+    }
+
+    /// <summary>
+    /// Compara um vetor solto com o cadastro, como a calibração faz. A
+    /// conferência resultante não identifica ninguém na marcação: sem prova
+    /// de vida, o vetor pode ter saído de uma foto.
+    /// </summary>
     public ConferenciaFacial Conferir(ModeloFacial capturado, LimiarDeAceitacao limiar, DateTimeOffset em)
     {
         ArgumentNullException.ThrowIfNull(capturado);
         ArgumentNullException.ThrowIfNull(limiar);
+        ConferirReconhecedor(limiar);
 
+        return new ConferenciaFacial(Empregador, Trabalhador, Modelo.Similaridade(capturado), limiar, em, null);
+    }
+
+    private void ConferirReconhecedor(LimiarDeAceitacao limiar)
+    {
         if (limiar.Reconhecedor != Modelo.Reconhecedor)
         {
             throw new ExcecaoDeDominio(
                 $"O limiar é do reconhecedor {limiar.Reconhecedor}, e o cadastro, do {Modelo.Reconhecedor}.");
         }
-
-        return new ConferenciaFacial(Empregador, Trabalhador, Modelo.Similaridade(capturado), limiar, em);
     }
 }

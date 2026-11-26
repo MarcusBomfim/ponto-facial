@@ -33,8 +33,11 @@ public sealed class ExemploDoReadmeTests
         var limiar = RostosDeTeste.Limiar;
         var cadastro = CadastroFacial.Cadastrar(autorizacao, RostosDeTeste.CapturasDoJoao, limiar, Hora(7, 5));
 
-        // Às 7h58min31s, digita o CPF no tablet da portaria e olha para a câmera.
-        var conferencia = cadastro.Conferir(RostosDeTeste.JoaoNaPortaria, limiar, Hora(7, 58, 31));
+        // Às 7h58min31s, digita o CPF no tablet da portaria e faz a prova de vida:
+        // olha para a câmera, vira o rosto para onde a tela pede e volta.
+        var provaNaPortaria = RostosDeTeste.Prova(RostosDeTeste.JoaoNaPortaria, Hora(7, 58, 31));
+        Assert.True(provaNaPortaria.Aprovada);
+        var conferencia = cadastro.Conferir(provaNaPortaria, limiar);
         Assert.True(conferencia.Conferiu);
         var entrada = registro.MarcarOnLine(IdentificacaoDoTrabalhador.PorRosto(autorizacao, conferencia), Coletor.DispositivoEletronico);
         Assert.Equal(3, entrada.Nsr);
@@ -47,7 +50,7 @@ public sealed class ExemploDoReadmeTests
         Assert.Equal(MotivoDoEncerramento.RevogadaPeloTrabalhador, eliminar.Motivo);
 
         // Na saída, o rosto não o identifica mais. O código pessoal, sim, e a saída vale o mesmo.
-        var naSaida = cadastro.Conferir(RostosDeTeste.JoaoNaPortaria, limiar, Hora(17, 2));
+        var naSaida = cadastro.Conferir(RostosDeTeste.Prova(RostosDeTeste.JoaoNaPortaria, Hora(17, 2)), limiar);
         var recusa = Assert.Throws<ExcecaoDeDominio>(() => IdentificacaoDoTrabalhador.PorRosto(autorizacao, naSaida));
         Assert.Equal(
             "Sem autorização biométrica vigente, o rosto não identifica o trabalhador. O código pessoal continua valendo.",

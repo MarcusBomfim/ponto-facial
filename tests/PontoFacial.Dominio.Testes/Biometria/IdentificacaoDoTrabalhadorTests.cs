@@ -40,11 +40,42 @@ public sealed class IdentificacaoDoTrabalhadorTests
     {
         var autorizacao = Autorizacao();
         var mariaNoLugarDoJoao = RostosDeTeste.CadastroDoJoao(autorizacao)
-            .Conferir(RostosDeTeste.MariaNaPortaria, RostosDeTeste.Limiar, Exemplos.Em(23, 12, 1));
+            .Conferir(RostosDeTeste.Prova(RostosDeTeste.MariaNaPortaria, Exemplos.Em(23, 12, 1)), RostosDeTeste.Limiar);
 
         var erro = Assert.Throws<ExcecaoDeDominio>(() => IdentificacaoDoTrabalhador.PorRosto(autorizacao, mariaNoLugarDoJoao));
 
         Assert.Equal("O rosto não conferiu com o cadastro do trabalhador. Tente de novo ou marque pelo código pessoal.", erro.Message);
+    }
+
+    [Fact]
+    public void O_rosto_sem_prova_de_vida_nao_identifica_nem_conferindo()
+    {
+        /*
+         * O vetor solto confere com o cadastro — é o do João. Mas pode ter
+         * saído de uma foto dele: sem prova de vida, não marca ponto.
+         */
+        var autorizacao = Autorizacao();
+        var vetorSolto = RostosDeTeste.CadastroDoJoao(autorizacao).Conferir(RostosDeTeste.JoaoNaPortaria, RostosDeTeste.Limiar, Exemplos.Em(23, 12, 1));
+
+        var erro = Assert.Throws<ExcecaoDeDominio>(() => IdentificacaoDoTrabalhador.PorRosto(autorizacao, vetorSolto));
+
+        Assert.True(vetorSolto.Conferiu);
+        Assert.Null(vetorSolto.Prova);
+        Assert.Equal(
+            "Sem prova de vida aprovada, o rosto não identifica o trabalhador: uma foto dele conferiria do mesmo jeito.",
+            erro.Message);
+    }
+
+    [Fact]
+    public void A_identificacao_pelo_rosto_tem_o_instante_do_fim_da_prova_de_vida()
+    {
+        var autorizacao = Autorizacao();
+        var conferencia = RostosDeTeste.JoaoConferido(autorizacao, Exemplos.Em(23, 12, 1));
+
+        var identificacao = IdentificacaoDoTrabalhador.PorRosto(autorizacao, conferencia);
+
+        Assert.Equal(conferencia.Prova!.Em, identificacao.Em);
+        Assert.True(conferencia.Prova.Em - conferencia.Prova.Inicio > TimeSpan.FromSeconds(3));
     }
 
     [Fact]
@@ -66,7 +97,7 @@ public sealed class IdentificacaoDoTrabalhadorTests
         var cadastro = RostosDeTeste.CadastroDoJoao(autorizacao);
         autorizacao.Revogar(Exemplos.Em(24, 18, 0));
 
-        var conferencia = cadastro.Conferir(RostosDeTeste.JoaoNaPortaria, RostosDeTeste.Limiar, Exemplos.Em(25, 7, 55));
+        var conferencia = cadastro.Conferir(RostosDeTeste.Prova(RostosDeTeste.JoaoNaPortaria, Exemplos.Em(25, 7, 55)), RostosDeTeste.Limiar);
         var erro = Assert.Throws<ExcecaoDeDominio>(() => IdentificacaoDoTrabalhador.PorRosto(autorizacao, conferencia));
         var peloCodigo = IdentificacaoDoTrabalhador.PorCodigoPessoal(Exemplos.Construtora, Exemplos.Joao, Exemplos.Em(25, 7, 55));
 
