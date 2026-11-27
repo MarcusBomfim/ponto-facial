@@ -1,11 +1,15 @@
 <Solution>
   <Folder Name="/src/">
+    <Project Path="src/PontoFacial.Api/PontoFacial.Api.csproj" />
+    <Project Path="src/PontoFacial.Assinaturas/PontoFacial.Assinaturas.csproj" />
     <Project Path="src/PontoFacial.Dominio/PontoFacial.Dominio.csproj" />
     <Project Path="src/PontoFacial.Persistencia/PontoFacial.Persistencia.csproj" />
     <Project Path="src/PontoFacial.Rosto/PontoFacial.Rosto.csproj" />
   </Folder>
   <Folder Name="/tests/">
+    <Project Path="tests/PontoFacial.Api.Testes/PontoFacial.Api.Testes.csproj" />
     <Project Path="tests/PontoFacial.Arquitetura.Testes/PontoFacial.Arquitetura.Testes.csproj" />
+    <Project Path="tests/PontoFacial.Assinaturas.Testes/PontoFacial.Assinaturas.Testes.csproj" />
     <Project Path="tests/PontoFacial.Dominio.Testes/PontoFacial.Dominio.Testes.csproj" />
     <Project Path="tests/PontoFacial.EnsaioDaProvaDeVida.Testes/PontoFacial.EnsaioDaProvaDeVida.Testes.csproj" />
     <Project Path="tests/PontoFacial.Persistencia.Testes/PontoFacial.Persistencia.Testes.csproj" />

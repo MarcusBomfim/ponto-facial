@@ -61,6 +61,9 @@ public sealed class BancoDeTestes : IAsyncLifetime
     private static bool EmIntegracaoContinua =>
         string.Equals(Environment.GetEnvironmentVariable("CI"), "true", StringComparison.OrdinalIgnoreCase);
 
+    /// <summary>Se o banco subiu. Sem Docker, fora do CI, não sobe.</summary>
+    public bool Disponivel => _aplicacao is not null;
+
     /// <summary>A fonte do dono do banco — superusuário, que passa por cima da segurança por linha. Pula o teste se não houver banco.</summary>
     public NpgsqlDataSource Dono
     {

@@ -1,0 +1,22 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <IsTestProject>true</IsTestProject>
+    <TestingPlatformDotnetTestSupport>true</TestingPlatformDotnetTestSupport>
+    <RootNamespace>PontoFacial.Assinaturas.Testes</RootNamespace>
+  </PropertyGroup>
+  <ItemGroup>
+    <PackageReference Include="xunit.v3.mtp-v2" />
+  </ItemGroup>
+  <ItemGroup>
+    <Using Include="Xunit" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\..\src\PontoFacial.Assinaturas\PontoFacial.Assinaturas.csproj" />
+  </ItemGroup>
+  <!-- O empregador, a obra e o João dos testes do domínio, para o comprovante. -->
+  <ItemGroup>
+    <Compile Include="..\PontoFacial.Dominio.Testes\Exemplos.cs" Link="Exemplos\Exemplos.cs" />
+    <Compile Include="..\PontoFacial.Dominio.Testes\Registro\RegistroDeExemplo.cs" Link="Exemplos\RegistroDeExemplo.cs" />
+  </ItemGroup>
+</Project>

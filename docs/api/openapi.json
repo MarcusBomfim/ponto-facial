@@ -1,0 +1,1061 @@
+{
+  "openapi": "3.1.1",
+  "info": {
+    "title": "PontoFacial.Api | v1",
+    "version": "1.0.0"
+  },
+  "paths": {
+    "/api/estabelecimentos/{estabelecimento}/trabalhadores/{cpf}/espelho": {
+      "get": {
+        "tags": [
+          "Espelho"
+        ],
+        "parameters": [
+          {
+            "name": "estabelecimento",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "cpf",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "de",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "date"
+            }
+          },
+          {
+            "name": "ate",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "date"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/trabalhadores/{cpf}/biometria": {
+      "delete": {
+        "tags": [
+          "Biometria"
+        ],
+        "parameters": [
+          {
+            "name": "cpf",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/estabelecimentos": {
+      "post": {
+        "tags": [
+          "Cadastro"
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PedidoDeEstabelecimento"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/estabelecimentos/{estabelecimento}": {
+      "get": {
+        "tags": [
+          "Cadastro"
+        ],
+        "parameters": [
+          {
+            "name": "estabelecimento",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/estabelecimentos/{estabelecimento}/feriados/{data}": {
+      "put": {
+        "tags": [
+          "Cadastro"
+        ],
+        "parameters": [
+          {
+            "name": "estabelecimento",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "data",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "date"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PedidoDeFeriado"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "Cadastro"
+        ],
+        "parameters": [
+          {
+            "name": "estabelecimento",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "data",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "date"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/estabelecimentos/{estabelecimento}/feriados": {
+      "get": {
+        "tags": [
+          "Cadastro"
+        ],
+        "parameters": [
+          {
+            "name": "estabelecimento",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/trabalhadores/{cpf}": {
+      "put": {
+        "tags": [
+          "Cadastro"
+        ],
+        "parameters": [
+          {
+            "name": "cpf",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PedidoDeTrabalhador"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      },
+      "get": {
+        "tags": [
+          "Cadastro"
+        ],
+        "parameters": [
+          {
+            "name": "cpf",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/trabalhadores/{cpf}/horarios/{vigenteDesde}": {
+      "put": {
+        "tags": [
+          "Cadastro"
+        ],
+        "parameters": [
+          {
+            "name": "cpf",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "vigenteDesde",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "date"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PedidoDeHorario"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/trabalhadores/{cpf}/horarios": {
+      "get": {
+        "tags": [
+          "Cadastro"
+        ],
+        "parameters": [
+          {
+            "name": "cpf",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/estabelecimentos/{estabelecimento}/registro": {
+      "post": {
+        "tags": [
+          "Registro"
+        ],
+        "parameters": [
+          {
+            "name": "estabelecimento",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/estabelecimentos/{estabelecimento}/registro/inclusoes": {
+      "post": {
+        "tags": [
+          "Registro"
+        ],
+        "parameters": [
+          {
+            "name": "estabelecimento",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PedidoSobreTrabalhador"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/estabelecimentos/{estabelecimento}/registro/alteracoes": {
+      "post": {
+        "tags": [
+          "Registro"
+        ],
+        "parameters": [
+          {
+            "name": "estabelecimento",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PedidoSobreTrabalhador"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/estabelecimentos/{estabelecimento}/registro/exclusoes": {
+      "post": {
+        "tags": [
+          "Registro"
+        ],
+        "parameters": [
+          {
+            "name": "estabelecimento",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PedidoSobreTrabalhador"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/estabelecimentos/{estabelecimento}/marcacoes": {
+      "post": {
+        "tags": [
+          "Marca\u00E7\u00E3o"
+        ],
+        "parameters": [
+          {
+            "name": "estabelecimento",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PedidoDeMarcacao"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/estabelecimentos/{estabelecimento}/marcacoes/{nsr}/comprovante": {
+      "get": {
+        "tags": [
+          "Marca\u00E7\u00E3o"
+        ],
+        "parameters": [
+          {
+            "name": "estabelecimento",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "nsr",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "pattern": "^-?(?:0|[1-9]\\d*)$",
+              "type": "integer",
+              "format": "int64"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/estabelecimentos/{estabelecimento}/comprovantes": {
+      "get": {
+        "tags": [
+          "Marca\u00E7\u00E3o"
+        ],
+        "parameters": [
+          {
+            "name": "estabelecimento",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/estabelecimentos/{estabelecimento}/trabalhadores/{cpf}/inclusoes": {
+      "post": {
+        "tags": [
+          "Tratamento"
+        ],
+        "parameters": [
+          {
+            "name": "estabelecimento",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "cpf",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PedidoDeInclusao"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/estabelecimentos/{estabelecimento}/trabalhadores/{cpf}/desconsideracoes": {
+      "post": {
+        "tags": [
+          "Tratamento"
+        ],
+        "parameters": [
+          {
+            "name": "estabelecimento",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "cpf",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PedidoDeDesconsideracao"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/estabelecimentos/{estabelecimento}/trabalhadores/{cpf}/abonos": {
+      "post": {
+        "tags": [
+          "Tratamento"
+        ],
+        "parameters": [
+          {
+            "name": "estabelecimento",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "cpf",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PedidoDeAbono"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/estabelecimentos/{estabelecimento}/afd": {
+      "get": {
+        "tags": [
+          "Arquivos da Portaria"
+        ],
+        "parameters": [
+          {
+            "name": "estabelecimento",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "de",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "date"
+            }
+          },
+          {
+            "name": "ate",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "date"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/estabelecimentos/{estabelecimento}/aej": {
+      "get": {
+        "tags": [
+          "Arquivos da Portaria"
+        ],
+        "parameters": [
+          {
+            "name": "estabelecimento",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "de",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "date"
+            }
+          },
+          {
+            "name": "ate",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "date"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/biometria/termo": {
+      "get": {
+        "tags": [
+          "Biometria"
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TermoMostrado"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/biometria/autorizacao": {
+      "get": {
+        "tags": [
+          "Biometria"
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "Biometria"
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PedidoDeAutorizacao"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "Biometria"
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "Coletor": {
+        "enum": [
+          "AplicativoMovel",
+          "Navegador",
+          "AplicativoDesktop",
+          "DispositivoEletronico",
+          "Outro"
+        ]
+      },
+      "PedidoDeAbono": {
+        "required": [
+          "dia",
+          "motivo"
+        ],
+        "type": "object",
+        "properties": {
+          "dia": {
+            "type": "string",
+            "format": "date"
+          },
+          "motivo": {
+            "type": "string"
+          }
+        },
+        "additionalProperties": false
+      },
+      "PedidoDeAutorizacao": {
+        "required": [
+          "hashDoTermo"
+        ],
+        "type": "object",
+        "properties": {
+          "hashDoTermo": {
+            "type": "string"
+          }
+        },
+        "additionalProperties": false
+      },
+      "PedidoDeDesconsideracao": {
+        "required": [
+          "nsr",
+          "motivo"
+        ],
+        "type": "object",
+        "properties": {
+          "nsr": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int64"
+          },
+          "motivo": {
+            "type": "string"
+          }
+        },
+        "additionalProperties": false
+      },
+      "PedidoDeEstabelecimento": {
+        "required": [
+          "local",
+          "fuso"
+        ],
+        "type": "object",
+        "properties": {
+          "local": {
+            "type": "string"
+          },
+          "fuso": {
+            "type": "string"
+          }
+        },
+        "additionalProperties": false
+      },
+      "PedidoDeFeriado": {
+        "required": [
+          "nome"
+        ],
+        "type": "object",
+        "properties": {
+          "nome": {
+            "type": "string"
+          }
+        },
+        "additionalProperties": false
+      },
+      "PedidoDeHorario": {
+        "required": [
+          "semana",
+          "descansoSemanal",
+          "intervaloPreAssinalado"
+        ],
+        "type": "object",
+        "properties": {
+          "semana": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "array",
+              "items": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "descansoSemanal": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          },
+          "intervaloPreAssinalado": {
+            "type": "boolean"
+          },
+          "intervaloNegociadoEmMinutos": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "null",
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          },
+          "viradaDoDia": {
+            "type": [
+              "null",
+              "string"
+            ]
+          }
+        },
+        "additionalProperties": false
+      },
+      "PedidoDeInclusao": {
+        "required": [
+          "marcadaEm",
+          "motivo"
+        ],
+        "type": "object",
+        "properties": {
+          "marcadaEm": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "motivo": {
+            "type": "string"
+          }
+        },
+        "additionalProperties": false
+      },
+      "PedidoDeMarcacao": {
+        "required": [
+          "coletor"
+        ],
+        "type": "object",
+        "properties": {
+          "coletor": {
+            "$ref": "#/components/schemas/Coletor"
+          }
+        },
+        "additionalProperties": false
+      },
+      "PedidoDeTrabalhador": {
+        "required": [
+          "nome",
+          "admissao",
+          "cargo"
+        ],
+        "type": "object",
+        "properties": {
+          "nome": {
+            "type": "string"
+          },
+          "admissao": {
+            "type": "string",
+            "format": "date"
+          },
+          "cargo": {
+            "type": "string"
+          }
+        },
+        "additionalProperties": false
+      },
+      "PedidoSobreTrabalhador": {
+        "required": [
+          "cpf"
+        ],
+        "type": "object",
+        "properties": {
+          "cpf": {
+            "type": "string"
+          }
+        },
+        "additionalProperties": false
+      },
+      "TermoMostrado": {
+        "required": [
+          "versao",
+          "texto",
+          "hash",
+          "finalidade"
+        ],
+        "type": "object",
+        "properties": {
+          "versao": {
+            "type": "string"
+          },
+          "texto": {
+            "type": "string"
+          },
+          "hash": {
+            "type": "string"
+          },
+          "finalidade": {
+            "type": "string"
+          }
+        },
+        "additionalProperties": false
+      }
+    }
+  },
+  "tags": [
+    {
+      "name": "Espelho"
+    },
+    {
+      "name": "Biometria"
+    },
+    {
+      "name": "Cadastro"
+    },
+    {
+      "name": "Registro"
+    },
+    {
+      "name": "Marca\u00E7\u00E3o"
+    },
+    {
+      "name": "Tratamento"
+    },
+    {
+      "name": "Arquivos da Portaria"
+    }
+  ]
+}

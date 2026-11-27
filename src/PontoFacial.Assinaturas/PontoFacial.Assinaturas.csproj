@@ -1,0 +1,23 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <!--
+    As assinaturas que a Portaria 671 pede (arts. 86 a 88, ADR-0016): o
+    CAdES destacado, num .p7s ao lado do AFD e do AEJ, e o comprovante em PDF
+    assinado com PAdES. O PDF é escrito aqui mesmo, sem biblioteca: é uma
+    página de texto, e assim cada byte que entra na assinatura é conhecido.
+  -->
+  <PropertyGroup>
+    <RootNamespace>PontoFacial.Assinaturas</RootNamespace>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="System.Security.Cryptography.Pkcs" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\PontoFacial.Dominio\PontoFacial.Dominio.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <InternalsVisibleTo Include="PontoFacial.Assinaturas.Testes" />
+  </ItemGroup>
+</Project>
