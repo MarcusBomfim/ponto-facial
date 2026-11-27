@@ -5,7 +5,7 @@
 
 Um ponto eletrônico com reconhecimento facial, feito dentro da Portaria MTP nº 671/2021 e da LGPD. O trabalhador diz quem é, olha para a câmera do celular ou do tablet da portaria e vira o rosto para onde a tela pede; o rosto confirma, e a prova de vida garante que era ele ali, e não uma foto dele. O sistema grava a marcação numa sequência que não se apaga, amarrada por hash, e entrega o comprovante. Quem não quer biometria marca pelo código pessoal, e a marcação vale o mesmo.
 
-C# 14 · .NET 10 · ONNX Runtime · YuNet · SFace · SkiaSharp · PostgreSQL 17 · Npgsql · xUnit v3 · Testcontainers · GitHub Actions
+C# 14 · .NET 10 · ASP.NET Core · ONNX Runtime · YuNet · SFace · SkiaSharp · PostgreSQL 17 · Npgsql · CAdES e PAdES · xUnit v3 · Testcontainers · GitHub Actions
 
 ## O problema
 
@@ -243,6 +243,50 @@ update ponto.operacoes set marcada_em = marcada_em - interval '8 minutes' where 
 
 O superusuário pode desligar o gatilho, mas a leitura o pega do mesmo jeito: ela refaz o hash de cada marcação a partir das colunas e confere a numeração e a cadeia.
 
+### A API e os arquivos da Portaria
+
+A API REST leva a empresa, o CPF e o papel no token: o RH cadastra e trata, o gestor lê, o trabalhador marca e vê o que é dele (ADR-0017). O dia do João pela API está em [`ExemploDoReadmeNaApiTests`](tests/PontoFacial.Api.Testes/ExemploDoReadmeNaApiTests.cs):
+
+```http
+POST /api/estabelecimentos/{obra}/marcacoes
+Authorization: Bearer <token do João>
+
+{ "coletor": "DispositivoEletronico" }
+```
+
+```json
+{
+  "nsr": 3,
+  "marcadaEm": "2026-11-23T07:58-03:00",
+  "hash": "7221a9802299bd7a0cd9b4b9813d9872d5a6a0c07311eab15ce5123e913a41bd",
+  "comprovante": "/api/estabelecimentos/{obra}/marcacoes/3/comprovante"
+}
+```
+
+A hora não vem do aparelho: é a do relógio do servidor, lida quando a marcação já entrou na fila do estabelecimento. Um campo de hora no pedido é recusado. O comprovante é um PDF assinado no padrão PAdES, e o trabalhador extrai os das últimas 48 horas (art. 80).
+
+Para o fiscal, o RH pede o AFD e o AEJ de um período. Os dois saem pelos leiautes publicados no gov.br, a versão 004 do AFD e a 002 do AEJ, cada um num `.zip` com o `.p7s` que o assina, no padrão CAdES (ADR-0015 e ADR-0016):
+
+```http
+GET /api/estabelecimentos/{obra}/afd?de=2026-11-23&ate=2026-11-23
+```
+
+```text
+AFD512026001234511222333000181REP_P.txt
+AFD512026001234511222333000181REP_P.p7s
+```
+
+A entrada do João é a quarta linha do AFD, a mesma do exemplo em memória. No AEJ, é a primeira entrada do dia, com o código do horário:
+
+```text
+00000000372026-11-23T07:58:00-03000529982247252026-11-23T07:58:00-0300040 7221a9802299bd7a0cd9b4b9813d9872d5a6a0c07311eab15ce5123e913a41bd
+05|1|2026-11-23T07:58:00-0300|1|E|001|O|1|
+```
+
+(Na linha do AFD, o espaço antes do hash está aqui só para ler.)
+
+Os erros voltam como ProblemDetails, com a mensagem do domínio e um tipo do [catálogo](docs/api/problemas.md). O contrato da API está publicado em [`docs/api/openapi.json`](docs/api/openapi.json), e um teste quebra se a API mudar sem ele.
+
 ## Decisões
 
 As decisões de projeto estão registradas em [`docs/adr`](docs/adr):
@@ -261,6 +305,9 @@ As decisões de projeto estão registradas em [`docs/adr`](docs/adr):
 - [ADR-0012 — O banco é o PostgreSQL, com SQL escrito à mão, e cada empresa só vê o que é dela](docs/adr/0012-postgresql-com-sql-a-mao-e-cada-empresa-isolada.md)
 - [ADR-0013 — No banco, o registro só cresce, o próprio banco confere o NSR e o hash, e o registro se retoma pela ponta](docs/adr/0013-o-banco-confere-o-nsr-e-o-hash-e-o-registro-se-retoma-pela-ponta.md)
 - [ADR-0014 — O vetor do rosto é cifrado com AES-256-GCM, com uma chave por empresa embrulhada pela chave mestra](docs/adr/0014-vetor-cifrado-com-aes-gcm-e-chave-por-empresa.md)
+- [ADR-0015 — O AFD e o AEJ saem pelos leiautes do gov.br, e cada leitura em aberto fica escrita](docs/adr/0015-afd-e-aej-pelos-leiautes-do-gov-br.md)
+- [ADR-0016 — O AFD e o AEJ levam um .p7s com CAdES, e o comprovante é um PDF com PAdES](docs/adr/0016-cades-no-p7s-e-pades-no-comprovante.md)
+- [ADR-0017 — A API leva a empresa e o papel no token, e a hora de cada marcação é a do servidor, lida na fila](docs/adr/0017-api-com-papeis-no-token-e-a-hora-do-servidor.md)
 
 ## Como rodar
 
@@ -272,7 +319,31 @@ dotnet test --solution PontoFacial.slnx
 
 A primeira compilação baixa os dois modelos de rosto do OpenCV Zoo (37 MB) para `modelos/` e confere o SHA-256 de cada um. O CI roda o mesmo, com a formatação conferida antes: `dotnet format PontoFacial.slnx --verify-no-changes`.
 
-Os testes da persistência sobem um PostgreSQL 17.6 num contêiner, pelo Testcontainers, e precisam do Docker. Sem ele, fora do CI, são pulados e dizem por quê; no CI, a falta do Docker é falha.
+Os testes da persistência sobem um PostgreSQL 17.6 num contêiner, pelo Testcontainers, e precisam do Docker. Sem ele, fora do CI, são pulados e dizem por quê; no CI, a falta do Docker é falha. Os da API também. Os das assinaturas conferem cada assinatura também com o `openssl`, que no CI tem de estar lá.
+
+Para rodar a API em desenvolvimento, com um PostgreSQL num contêiner:
+
+```powershell
+docker run -d --name ponto-facial-dev -p 55440:5432 -e POSTGRES_PASSWORD=postgres-desenvolvimento postgres:17.6-alpine
+```
+
+```powershell
+docker exec ponto-facial-dev psql -U postgres -c "create database ponto"
+```
+
+```powershell
+dotnet run --project src/PontoFacial.Api -- --migrar
+```
+
+```powershell
+docker exec ponto-facial-dev psql -U postgres -d ponto -c "create role ponto_api login password 'ponto-api-desenvolvimento' in role ponto_aplicacao"
+```
+
+```powershell
+dotnet run --project src/PontoFacial.Api
+```
+
+Ela atende em http://localhost:5390, com o contrato em `/openapi/v1.json`. Os tokens vêm de quem autentica as pessoas, com o emissor, o público e a chave da configuração. Em desenvolvimento, a API sobe sem os segredos: a chave dos tokens e a chave mestra são derivadas de uma semente pública, e o certificado é assinado por ele mesmo. Nada disso vale fora dali, e fora de desenvolvimento a API não sobe sem `Autenticacao:Chave`, `ChaveMestra:Base64` e `Assinatura:Certificado`.
 
 Para calibrar o limiar numa base de fotos com uma pasta por pessoa, como a LFW:
 
@@ -297,7 +368,7 @@ O projeto é construído em oito partes, cada uma entregue funcionando, testada 
 | 3 | A prova de vida: foto de foto, tela de celular e vídeo recusados; métricas da ISO/IEC 30107-3 | ✅ |
 | 4 | A jornada pela CLT: tolerância de 5 e 10 minutos, intervalos, hora noturna reduzida, horas extras e o espelho de ponto do art. 84 | ✅ |
 | 5 | Persistência: PostgreSQL com o vetor do rosto cifrado (AES-GCM, chave por empresa) e cada empresa isolada no banco | ✅ |
-| 6 | A API REST e os arquivos da Portaria (AFD e AEJ), o comprovante em PDF assinado e os papéis de RH, gestor e trabalhador | |
+| 6 | A API REST e os arquivos da Portaria (AFD e AEJ), o comprovante em PDF assinado e os papéis de RH, gestor e trabalhador | ✅ |
 | 7 | O aplicativo: a câmera do celular, o tablet em modo quiosque e a marcação sem biometria, com acessibilidade | |
 | 8 | Erro por grupo e relatório de impacto (RIPD), observabilidade, Docker e entrega contínua | |
 
@@ -367,6 +438,16 @@ O projeto é construído em oito partes, cada uma entregue funcionando, testada 
 - **O vetor do rosto cifrado com AES-256-GCM**, pela chave da empresa, embrulhada pela chave mestra, que fica fora do banco. A cifra é amarrada à empresa, ao CPF e à autorização, e colada em outra linha não abre. Nenhum trecho do vetor aparece no banco.
 - **O modelo sai quando a autorização acaba**, na mesma transação, e o banco recusa a autorização que acaba com o modelo ainda lá. A autorização encerrada não reabre nem se apaga. O termo guarda o texto que o trabalhador leu, e o banco confere o hash dele.
 - **As chaves giram sem parar o sistema.** A chave da empresa ganha uma versão nova, os modelos são cifrados de novo e a antiga é descartada. Para trocar a chave mestra, as chaves das empresas são embrulhadas de novo, sem tocar nos modelos.
+
+**Parte 6 — a API e os arquivos da Portaria**
+
+- **O AFD no leiaute 004 do gov.br.** Cada registro tem o tamanho fixo do leiaute, os tipos 1 a 5 levam o CRC-16/KERMIT, conferido pelo valor do leiaute, e o tipo 7 é a linha que a marcação já escreve. O arquivo de um período traz as operações gravadas nele, na hora do estabelecimento, conferidas no banco.
+- **O AEJ no leiaute 002 do gov.br.** Ele traz os vínculos, os horários contratuais com a hora noturna reduzida, as marcações com as letras E, S e D e a origem de cada uma (do registro, incluída, pré-assinalada), as faltas, o descanso semanal e a identificação do programa. A versão 001, do anexo VI revogado, ficou para trás. Cada leitura que o leiaute deixa em aberto está na ADR-0015.
+- **O horário contratual com vigência.** Cada horário vale a partir de uma data, e o espelho e o AEJ de um período usam o que valia nele. Se o horário muda no meio do período, a mensagem diz em que duas partes pedir. Os feriados locais ficam por estabelecimento, pelas regras do calendário.
+- **As assinaturas da Portaria.** O AFD e o AEJ levam um `.p7s` destacado, com CAdES. O comprovante é um PDF com PAdES, escrito sem biblioteca, com o espaço da assinatura reservado e o `/ByteRange` preenchido depois. As assinaturas são conferidas pelo .NET e pelo openssl, e a política de assinatura da ICP-Brasil vem da configuração.
+- **A API REST com três papéis.** O RH cadastra, abre o registro, trata e gera os arquivos. O gestor lê. O trabalhador marca, extrai os comprovantes das últimas 48 horas, vê o próprio espelho e autoriza ou revoga a biometria sozinho. A empresa vem no token, e nenhum papel vê outra empresa.
+- **A hora do servidor, lida na fila.** A marcação que chega depois sempre tem a hora de depois, e o relógio do registro nunca volta. O aparelho não manda hora nenhuma.
+- **Os erros como ProblemDetails**, com a mensagem do domínio e um tipo do catálogo, e o contrato OpenAPI publicado e conferido por teste.
 
 ## Licença
 
