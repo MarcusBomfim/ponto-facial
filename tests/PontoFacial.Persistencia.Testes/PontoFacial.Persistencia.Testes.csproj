@@ -18,7 +18,7 @@
   <!--
     O empregador, a obra, o João e a semana dele, e os rostos de teste, dos
     testes do domínio, compilados aqui também: o que se grava e se lê é
-    exatamente o que o domínio já conferiu. Seis arquivos não justificam uma
+    exatamente o que o domínio já conferiu. Sete arquivos não justificam uma
     biblioteca de testes compartilhada.
   -->
   <ItemGroup>
@@ -28,5 +28,6 @@
     <Compile Include="..\PontoFacial.Dominio.Testes\Jornada\SemanaDoJoao.cs" Link="Exemplos\SemanaDoJoao.cs" />
     <Compile Include="..\PontoFacial.Dominio.Testes\Biometria\RostosDeTeste.cs" Link="Exemplos\RostosDeTeste.cs" />
     <Compile Include="..\PontoFacial.Dominio.Testes\Biometria\Vivacidade\Cenas.cs" Link="Exemplos\Cenas.cs" />
+    <Compile Include="..\PontoFacial.Dominio.Testes\Arquivos\Programas.cs" Link="Exemplos\Programas.cs" />
   </ItemGroup>
 </Project>

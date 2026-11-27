@@ -113,7 +113,7 @@ public sealed class TratamentosDoPonto
             cancelamento);
     }
 
-    private async Task<(TratamentoDoPonto Tratamento, int Gravados)> Refazer(Sessao sessao, Guid estabelecimento, Cpf trabalhador)
+    internal async Task<(TratamentoDoPonto Tratamento, int Gravados)> Refazer(Sessao sessao, Guid estabelecimento, Cpf trabalhador)
     {
         var local = await _empresa.Estabelecimentos.Obter(sessao, estabelecimento);
         var (incluido, marcacoes) = await RegistrosDePonto.DoTrabalhador(sessao, estabelecimento, trabalhador);

@@ -37,14 +37,15 @@ public sealed class Trabalhadores
     {
         ArgumentNullException.ThrowIfNull(cpf);
 
-        return _empresa.Transacao(
-            async sessao => await sessao.LerUma(
-                Ler,
-                linha => Leitura.Validada(
-                    () => Trabalhador.Novo(linha.GetString(0), cpf, linha.GetFieldValue<DateOnly>(1), linha.GetString(2)),
-                    $"O cadastro do trabalhador {cpf}"),
-                cpf.Numero)
-                ?? throw new NaoEncontrado($"O trabalhador {cpf} não está cadastrado nesta empresa."),
-            cancelamento);
+        return _empresa.Transacao(sessao => Obter(sessao, cpf), cancelamento);
     }
+
+    internal static async Task<Trabalhador> Obter(Sessao sessao, Cpf cpf) =>
+        await sessao.LerUma(
+            Ler,
+            linha => Leitura.Validada(
+                () => Trabalhador.Novo(linha.GetString(0), cpf, linha.GetFieldValue<DateOnly>(1), linha.GetString(2)),
+                $"O cadastro do trabalhador {cpf}"),
+            cpf.Numero)
+        ?? throw new NaoEncontrado($"O trabalhador {cpf} não está cadastrado nesta empresa.");
 }

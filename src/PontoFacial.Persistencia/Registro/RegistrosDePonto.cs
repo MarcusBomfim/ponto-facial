@@ -167,12 +167,18 @@ public sealed class RegistrosDePonto
             {
                 await _empresa.Estabelecimentos.Obter(sessao, estabelecimento);
 
-                var operacoes = await sessao.Ler(LerOperacoes, OperacoesNoBanco.Ler, estabelecimento, aPartirDoNsr, quantas);
-                ConferirASequencia(operacoes, aPartirDoNsr);
-
-                return operacoes;
+                return await Pagina(sessao, estabelecimento, aPartirDoNsr, quantas);
             },
             cancelamento);
+    }
+
+    /// <summary>As operações a partir do NSR, em ordem e conferidas, dentro de uma transação já aberta.</summary>
+    internal static async Task<IReadOnlyList<Operacao>> Pagina(Sessao sessao, Guid estabelecimento, long aPartirDoNsr, int quantas)
+    {
+        var operacoes = await sessao.Ler(LerOperacoes, OperacoesNoBanco.Ler, estabelecimento, aPartirDoNsr, quantas);
+        ConferirASequencia(operacoes, aPartirDoNsr);
+
+        return operacoes;
     }
 
     /// <summary>O comprovante de uma marcação gravada (art. 79), com o nome que o trabalhador tinha quando marcou.</summary>

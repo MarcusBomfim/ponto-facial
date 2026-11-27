@@ -1,6 +1,7 @@
 using Npgsql;
 using PontoFacial.Dominio.Cadastro;
 using PontoFacial.Dominio.Documentos;
+using PontoFacial.Persistencia.Arquivos;
 using PontoFacial.Persistencia.Cadastro;
 using PontoFacial.Persistencia.Jornada;
 using PontoFacial.Persistencia.Registro;
@@ -38,6 +39,9 @@ public sealed class EmpresaNoBanco
         Trabalhadores = new Trabalhadores(this);
         Registros = new RegistrosDePonto(this);
         Tratamentos = new TratamentosDoPonto(this);
+        Horarios = new HorariosContratuais(this);
+        Feriados = new FeriadosLocais(this);
+        Arquivos = new ArquivosDaPortaria(this);
     }
 
     /// <summary>O id do empregador, que é o da empresa.</summary>
@@ -52,6 +56,15 @@ public sealed class EmpresaNoBanco
 
     /// <summary>O tratamento do ponto de cada trabalhador, em cada estabelecimento.</summary>
     public TratamentosDoPonto Tratamentos { get; }
+
+    /// <summary>O horário contratual de cada trabalhador, com a data em que passou a valer.</summary>
+    public HorariosContratuais Horarios { get; }
+
+    /// <summary>Os feriados locais de cada estabelecimento.</summary>
+    public FeriadosLocais Feriados { get; }
+
+    /// <summary>O AFD e o AEJ, para o Auditor-Fiscal do Trabalho.</summary>
+    public ArquivosDaPortaria Arquivos { get; }
 
     internal BancoDoPonto Banco { get; }
 
